@@ -1,0 +1,7 @@
+Airseoul_전처리
+1) totaldata = 2010~2020년 크롤링으로 데려온 전체데이터 생성
+2) airseoul = 39개측정소, 결측값, 이상치 기본적인 전처리 완료한 데이터 생성
+
+Airseoul_측정소별분석
+
+Airseoul_ts
