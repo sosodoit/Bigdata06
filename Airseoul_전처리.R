@@ -29,8 +29,8 @@ names(airdata0) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2","PM10","PM25")
 data1 <- read.csv(file="./data/일별평균대기오염도_2019.csv", encoding = "utf-8")
 names(data1) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2","PM10","PM25")
 
-#2020년 11월3일
-data2 <- read.csv(file="./data/일별평균대기오염도_2020.csv", encoding = "UTF-8")[,-1]
+#2020년 11월25일
+data2 <- read.csv(file="./data/일별평균대기오염도_2020up.csv", encoding = "UTF-8")[,-1]
 names(data2) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2","PM10","PM25")
 data2 <- data2[min(which(data2$DATE == "20200101")):nrow(data2),]
 
@@ -58,6 +58,7 @@ for(i in 1:length(x)){
 # 8번째 변수 PM25의 결측치 합 = 46287, 과거에는 초미세먼지 측정이 없어서 많은 결측치가 있음을 확인하였다. 우리 연구는 과거데이터가 필요하고 PM10이 있으므로 연구 목적에는 변함이 없다고 판단하여 PM25 변수는 제거하기로 하였다.
 x <- x[,-8]; cat("\n")
 
+###################################################################
 # 전체
 gg_miss_var(x, show_pct = T) # 누락비율표시
 table(is.na(x)) # 6995, PM25결측치가 매우 많았음을 알 수 있다.
@@ -82,6 +83,7 @@ gg_miss_upset(x)
 
 # x$NO2 %>% mutate(NO2 = ifelse(is.na(NO2), mean(NO2, na.rm = TRUE), NO2)) 
 # NO2 변수의 값이 na일 경우 평균으로, 아닐 경우 그대로 유지
+###################################################################
 
 x$DATE <- as.Date(as.character(x$DATE), format="%Y%m%d")
 x$week <- cut(x$DATE, breaks="week")
@@ -91,6 +93,7 @@ x$week <- as.Date(as.character(x$week), format="%Y-%m-%d")
 # w564 <- x %>% filter(week=="2020-11-02") %>% group_by(SGG) %>% miss_var_summary()
 
 # SGG 통일 시킨 후에 주단위 변경
+
 df10 <- x %>% filter(week < "2011-01-03")
 df11 <- x %>% filter(week >= "2011-01-03" & week < "2012-01-02")
 df12 <- x %>% filter(week >= "2011-01-03" & week < "2013-01-07")
@@ -101,7 +104,7 @@ df16 <- x %>% filter(week >= "2016-01-04" & week < "2017-01-02")
 df17 <- x %>% filter(week >= "2017-01-02" & week < "2018-01-01")
 df18 <- x %>% filter(week >= "2018-01-01" & week < "2019-01-07")
 df19 <- x %>% filter(week >= "2019-01-07" & week < "2020-01-06")
-df20 <- x %>% filter(week >= "2020-01-06" & week <= "2020-11-02")
+df20 <- x %>% filter(week >= "2020-01-06" & week <= "2020-11-25")
 
 # unique(df10$SGG) # 40
 # unique(df11$SGG) # 40
