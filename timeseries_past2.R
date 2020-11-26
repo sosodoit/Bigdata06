@@ -10,8 +10,8 @@ library(dplyr)
 library(ggplot2) #정적시계열
 library(dygraphs) #동적시계열 시각화할때 주로쓴데
 
-install.packages("DT")
-library(DT)
+#install.packages("DT")
+#library(DT)
 #***************************************# 
 #             데이터로드                #
 #***************************************# 
