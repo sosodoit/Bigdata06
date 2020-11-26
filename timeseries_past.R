@@ -28,6 +28,7 @@ df$week <- as.Date(df$week) #Date 타입으로 변환
 #***************************************# 
 #         구별 데이터 분리              #      
 #***************************************# 
+kind_ssg <-unique(df$SGG)
 sgg1 = df[df$SGG==kind_ssg[1],]
 sgg2 = df[df$SGG==kind_ssg[2],]
 sgg3 = df[df$SGG==kind_ssg[3],]
