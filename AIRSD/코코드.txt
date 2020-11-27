@@ -1,0 +1,43 @@
+import datetime
+def getDayName(year, month, day) :
+    return ['MON','TUE','WED','THU','FRI','SAT','SUN'][datetime.date(year, month, day).weekday()]
+
+r = open("uber_exp.txt", mode = 'r', encoding=None)
+data = r.read().splitlines()
+
+d = []
+a = len(data)
+z = ['MON','TUE','WED','THU','FRI','SAT','SUN']
+print(z[0])
+frame = [[0 for col in range(4)] for row in range(a)]
+count = -1
+for line in data :
+    count = count + 1
+    d.append(line.split(',')[0])
+    line2 = line.split(',')[1]
+    month = int(line2.split('/')[0])
+    day = int(line2.split('/')[1])
+    year = int(line2.split('/')[2])
+    for j in range(4) :
+        frame[count][j] = line.split(',')[j]
+        frame[count][1] = getDayName(year, month, day)
+    
+dd = list(set(d))
+r.close()
+
+asum = 0
+bsum = 0
+new = [4,4,4,4]
+f = open("new.txt",'w')
+for j in range(len(set(d))) :
+    for k in z:
+        for line in range(a) :
+            if dd[j] == frame[line][0] : 
+                if frame[line][1] == k :
+                    asum = asum + int(frame[line][2])
+                    bsum = bsum + int(frame[line][3])
+            new[0] = dd[j]
+            new[1] = k #frame[line][1]
+            new[2] = asum
+            new[3] = bsum
+        f.write(new[0] +' ' + new[1] + ' ' + str(new[2]) + ' ' + str(new[3]) +  '\n')
