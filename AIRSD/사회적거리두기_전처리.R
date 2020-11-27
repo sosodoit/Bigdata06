@@ -204,5 +204,7 @@ cf <- cforest(ploidy~.,data=train)
 cf.pred <- predict(cf,newdata=test, OOB=T, type='response')
 
 
+## 힘듦...
+## 자고싶어..
 
 
