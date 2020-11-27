@@ -2,12 +2,14 @@
 #         구별 데이터 분리              #      
 #***************************************# 
 AIR <- read.csv('./data/airseoul.csv', header = T)[,-1]
-kind_ssg <-as.character(unique(AIR$SGG));
+AIR$SGG <- factor(AIR$SGG)
+AIR$week <- as.Date(AIR$week)
+
 df <- AIR
-df$week <- as.Date(df$week)
 tr = df[df$week < '2020-01-06',]
 te = df[df$week >= '2020-01-06',]
 #***************************************#
+kind_ssg <-as.character(unique(AIR$SGG));
 sgg1 = tr[tr$SGG==kind_ssg[1],]
 sgg2 = tr[tr$SGG==kind_ssg[2],]
 sgg3 = tr[tr$SGG==kind_ssg[3],]

@@ -30,9 +30,8 @@ data1 <- read.csv(file="./data/일별평균대기오염도_2019.csv", encoding =
 names(data1) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2","PM10","PM25")
 
 #2020년 11월25일
-data2 <- read.csv(file="./data/일별평균대기오염도_2020up.csv", encoding = "UTF-8")[,-1]
+data2 <- read.csv(file="./data/일별평균대기오염도_2020.csv", encoding = "UTF-8")[,-1]
 names(data2) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2","PM10","PM25")
-data2 <- data2[min(which(data2$DATE == "20200101")):nrow(data2),]
 
 #2010년~2020년 totaldata
 airdata0 = rbind(airdata0, data1, data2)
@@ -86,14 +85,27 @@ gg_miss_upset(x)
 ###################################################################
 
 x$DATE <- as.Date(as.character(x$DATE), format="%Y%m%d")
+
 x$week <- cut(x$DATE, breaks="week")
 x$week <- as.Date(as.character(x$week), format="%Y-%m-%d")
 
 # w1 <- x %>% filter(week=="2009-12-28") %>% group_by(SGG) %>% miss_var_summary()
 # w564 <- x %>% filter(week=="2020-11-02") %>% group_by(SGG) %>% miss_var_summary()
 
-# SGG 통일 시킨 후에 주단위 변경
 
+df10 <- x %>% filter(DATE < "2011-01-03")
+df11 <- x %>% filter(DATE >= "2011-01-03" & DATE < "2012-01-02")
+df12 <- x %>% filter(DATE >= "2011-01-03" & DATE < "2013-01-07")
+df13 <- x %>% filter(DATE >= "2013-01-07" & DATE < "2014-01-06")
+df14 <- x %>% filter(DATE >= "2014-01-06" & DATE < "2015-01-05")
+df15 <- x %>% filter(DATE >= "2015-01-05" & DATE < "2016-01-04")
+df16 <- x %>% filter(DATE >= "2016-01-04" & DATE < "2017-01-02")
+df17 <- x %>% filter(DATE >= "2017-01-02" & DATE < "2018-01-01")
+df18 <- x %>% filter(DATE >= "2018-01-01" & DATE < "2019-01-07")
+df19 <- x %>% filter(DATE >= "2019-01-07" & DATE < "2020-01-06")
+df20 <- x %>% filter(DATE >= "2020-01-06" & DATE <= "2020-11-25")
+
+# SGG 통일 시킨 후에 주단위 변경
 df10 <- x %>% filter(week < "2011-01-03")
 df11 <- x %>% filter(week >= "2011-01-03" & week < "2012-01-02")
 df12 <- x %>% filter(week >= "2011-01-03" & week < "2013-01-07")
@@ -106,17 +118,17 @@ df18 <- x %>% filter(week >= "2018-01-01" & week < "2019-01-07")
 df19 <- x %>% filter(week >= "2019-01-07" & week < "2020-01-06")
 df20 <- x %>% filter(week >= "2020-01-06" & week <= "2020-11-25")
 
-# unique(df10$SGG) # 40
-# unique(df11$SGG) # 40
-# unique(df12$SGG) # 40
-# unique(df13$SGG) # 40
-# unique(df14$SGG) # 40
-# unique(df15$SGG) # 40
-# unique(df16$SGG) # 39 홍지문 없어짐
-# unique(df17$SGG) # 39 홍지문 없어짐
-# unique(df18$SGG) # 46 new : 관악산 궁동 남산 북한산 세곡 행주 시흥대로
-# unique(df19$SGG) # 50 new : 마포아트센터 서울숲 올림픽공원 자연사박물관
-# unique(df20$SGG) # 50 
+length(unique(df10$SGG)) # 40
+unique(df11$SGG) # 40
+unique(df12$SGG) # 40
+unique(df13$SGG) # 40
+unique(df14$SGG) # 40
+unique(df15$SGG) # 40
+length(unique(df16$SGG)) # 39 홍지문 없어짐
+unique(df17$SGG) # 39 홍지문 없어짐
+length(unique(df18$SGG)) # 46 new : 관악산 궁동 남산 북한산 세곡 행주 시흥대로
+unique(df19$SGG) # 50 new : 마포아트센터 서울숲 올림픽공원 자연사박물관
+unique(df20$SGG) # 50
 
 #which(unique(df19$SGG) == unique(df20$SGG))
 
@@ -138,56 +150,58 @@ x2.week <- x2 %>%
 
 # 없는 날짜 채우기
 df <- x2.week
-original <- seq(as.Date("2009-12-28"), as.Date("2020-11-02"), by = "7 days")
+df <- x2
+original <- seq(as.Date("2010-01-01"), as.Date("2020-11-25"), by = "days")
 for (i in 1:length(sgg)) {
   
-  missing = as.Date(setdiff(original, unique(df[df$SGG==sgg[i],]$week)), origin = "1970-01-01")
-  d = data.frame(cbind(as.character(sgg[i]), as.Date(missing, origin='1970-1-1'), NA, NA, NA, NA, NA))
-  names(d) <- c("SGG", "week", "NO2", "O3", "CO", "SO2", "PM10")
-  d[,2] <- as.character(as.Date(as.integer(d[,2]), origin = '1970-1-1'))
+  missing = as.Date(setdiff(original, unique(df[df$SGG==sgg[i],]$DATE)), origin = "1970-01-01")
+  d = data.frame(cbind(as.Date(missing, origin='1970-1-1'),as.character(sgg[i]), NA, NA, NA, NA, NA))
+  names(d) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2", "PM10")
+  d[,1] <- as.character(as.Date(as.integer(d[,1]), origin = '1970-1-1'))
   #d[,2] <- as.Date(d[,2])
   df = rbind(df, d)
 }
 
 # 정렬 후 값 채우기
-df <- data.frame(df[order(df$week, df$SGG),])
+df <- data.frame(df[order(df$DATE, df$SGG),])
 df[,3:7] <- as.numeric(unlist(df[,3:7]))
 
 #결측치 평균 대체
 x2.week <- df
+df2 <- df
 num <- vector()
 for(i in 3:7){
-  indi <- which(is.na(x2.week[,i]))
+  indi <- which(is.na(df2[,i]))
   for (j in indi){
     se <- (j-5):(j+5)
     
     for(k in 1:length(se)) {
-      num[k] <- x2.week[se[k],i]
+      num[k] <- df2[se[k],i]
     }
-    x2.week[j,i] <- mean(unlist(num), na.rm=T)
+    df2[j,i] <- mean(unlist(num), na.rm=T)
     #print(x2.week[j,i])
   }
 }
-sum(is.na(x2.week))
+sum(is.na(df2))
 
 #이상치 대체
-dig <- diagnose_numeric(x2.week)
+dig <- diagnose_numeric(df2)
 min <- max <- numeric()
 for(i in 1:nrow(dig)){
-  min[i] <- dig[i,3] - IQR(x2.week[[i+2]])*1.5
-  max[i] <- dig[i,6] + IQR(x2.week[[i+2]])*1.5
+  min[i] <- dig[i,3] - IQR(df2[[i+2]])*1.5
+  max[i] <- dig[i,6] + IQR(df2[[i+2]])*1.5
 }
 
 st1 <- st2 <- numeric()
 for(i in 3:7){
-  for(j in 1:nrow(x2.week)) {
+  for(j in 1:nrow(df2)) {
     
-    if(x2.week[j,i] < min[[i-2]]) {
-      x2.week[j,i] = min[[i-2]]; st1<-c(st1,j)}
-    else if(x2.week[j,i] > max[[i-2]]) {
-      x2.week[j,i] = max[[i-2]]; st2<-c(st2,j)}
+    if(df2[j,i] < min[[i-2]]) {
+      df2[j,i] = min[[i-2]]; st1<-c(st1,j)}
+    else if(df2[j,i] > max[[i-2]]) {
+      df2[j,i] = max[[i-2]]; st2<-c(st2,j)}
     
   }
 }
 
-write.csv(x2.week, "./data/airseoul.csv")
+write.csv(df2, "./data/airseoul_day.csv")
