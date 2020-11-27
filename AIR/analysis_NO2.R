@@ -1,5 +1,5 @@
-source('sgg_separate.R', encoding='utf-8') # 주별 데이터
-source('packages_need.R', encoding='utf-8') #필요 패키지 존재
+source('./AIR/sgg_separate.R', encoding='utf-8') # 주별 데이터
+source('./AIR/packages_need.R', encoding='utf-8') #필요 패키지 존재
 #******************************************************************************#
 #이거 전처리 할 때 써놓은 코드인데, 없는 날짜 볼 때 유용했던 거라.. 남겨둠!
 # https://lightblog.tistory.com/47 #숫자를 날짜로 바꾸기
@@ -20,7 +20,8 @@ source('packages_need.R', encoding='utf-8') #필요 패키지 존재
 #                             sgg1 no2 분석                                    #
 #******************************************************************************#
 freq <- 365.25/7
-freq <- 52
+
+# 여기 고치기
 train.no2 <- sgg1[,c(2,3)]
 test.no2 <- sgg1.te[,c(2,3)]
 #******************************************************************************#
@@ -34,8 +35,8 @@ test.no2.xts <- xts(test.no2$NO2, order.by=test.no2$week, frequency=freq)
 
 #******************************************************************************#
 ### no2 예측 
-train.no2.ts <- ts(train.no2.xts, start = c(2009,12,28), frequency=freq)
-test.no2.ts <- ts(test.no2.xts, start = c(2020,1,6), end=c(2020,11,25), frequency=freq)
+train.no2.ts <- ts(train.no2.xts, start = c(2009,1), frequency=freq)
+test.no2.ts <- ts(test.no2.xts, start = c(2020,1), end=c(2020,47), frequency=freq)
 #******************************************************************************#
 #                           2. 모형 전 시계열 데이터 진단
 #                           --> 통계적으로 적절하지 않다고 나옴
@@ -281,4 +282,5 @@ dygraph(airpoll_stocks, ylab="PM10", main="sgg별 PM10") %>%
   dyOptions(colors = c("red","green")) %>%
   dyRangeSelector()
 
-#save.image(file = "./timeseries_pm10.RData")
+# 저장!!!
+#save.image(file = "./timeseries_NO2.RData")
