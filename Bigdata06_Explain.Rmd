@@ -1,0 +1,934 @@
+---
+title: "Bigdata06_Explain"
+author: "soso"
+date: '2020 11 28'
+output:
+    html_document:
+    theme: cosmo
+    highlight: textmate
+---
+
+#사회적거리두기 단계별 대기질 예측(서비스)
+##1. 사회적거리두기 단계별 대기질 예측 (시스템)
+
+~블라블라~
+
+간단한 작업흐름을 다음과 같이 생성할 수 있고, 각 모듈별 필요한 기능을 구현하여 연결시켜 서비스로 제공한다.
+
+  1. 공공데이터 포털을 통해 데이터를 가져온다.
+  2. 공공데이터 포털 데이터를 탐색적으로 분석한다.
+  3. 앞선 단계에서 탐색적 데이터 분석을 수행하여 예측모형과 시각화 (산출물을 웹앱 형태로 개발)한다.
+
+##2. 실시간 대기 데이터 가져오기
+###2.1 대기오염 데이터
+
+Airseoul_crawling in colab(python)
+```{python, eval=F}
+# 1. 데이터 -----
+# 서울시 일별 평균 대기오염도 정보 : http://data.seoul.go.kr/dataList/OA-2218/S/1/datasetView.do
+
+## 1.1.
+import urllib.request
+from urllib.request import urlopen
+import json
+import pandas as pd 
+from pandas.io.json import json_normalize 
+
+url = "http://openapi.seoul.go.kr:8088/66424d6968647261393947744e6b54/json/DailyAverageAirQuality/1/50/20100101"
+html = urlopen(url)
+
+print(html.read().decode('UTF-8'))
+
+response = urllib.request.urlopen(url) 
+json_str = response.read().decode("utf-8")
+
+json_object = json.loads(json_str)
+
+# json_object -> df로
+df = pd.json_normalize(json_object['DailyAverageAirQuality']['row'])
+df
+
+#20200120 ~ 20201125
+dt_index = pd.date_range(start='20200101', end='20201125')
+
+remove_list = ['20180217', '20180321', '20180322', '20180323', '20180324', '20180325', '20180326', '20180327', '20180328', '20180329', '20180330', '20180331',
+               '20180401', '20180402', '20180403', '20180404', '20180405', '20180406', '20180407', '20180408', '20180420', '20180431', '20180518', '20180519',
+               '20180522', '20180523', '20180524', '20180525', '20180526', '20180528', '20180529', '20180530', '20180531', '20180603', '20180606', '20180607', 
+               '20180608', '20180609', '20180610', '20180611', '20180612', '20180613', '20180614', '20180615', '20180616', '20180617', '20180618', '20180619', 
+               '20180620', '20180621', '20180623', '20180624', '20180625', '20180627', '20180628', '20180629', '20180705', '20180704', '20190309', '20190310',
+               '20190311', '20190312', '20190313', '20190316', '20190317', '20190907', '20190908', '20180714', '20180715', '20181116', '20181117', '20181118',
+               '20200222', '20200223']
+
+dt_list = dt_index.strftime("%Y%m%d").tolist()
+dt_list
+for i in remove_list :
+  if i in dt_list :
+  dt_list.remove(i)
+
+#시도
+import time
+import datetime
+from google.colab import files
+import pandas as pd
+
+total_data = pd.DataFrame(index=range(0,0), columns=['MSRDT_DE', 'MSRSTE_NM', 'NO2', 'O3', 'CO', 'SO2', 'PM10', 'PM25'])
+one_data = pd.DataFrame(index=range(0,0), columns=['MSRDT_DE', 'MSRSTE_NM', 'NO2', 'O3', 'CO', 'SO2', 'PM10', 'PM25'])
+#total_data = pd.DataFrame(total_data)
+
+before = (2010, 1, 1)
+count = 1
+sum_vector = [0,0,0,0,0,0]
+for i in dt_list :
+  
+  print(i)
+'''
+  n = datetime.datetime(int(i[:4]), int(i[4:6]), int(i[6:]))
+  kth = n.isocalendar()
+  
+  if kth[1] == before[1] and kth[2] == before[2] :
+    for j in range(6) :
+      count+=1
+'''
+url = "http://openapi.seoul.go.kr:8088/66424d6968647261393947744e6b54/json/DailyAverageAirQuality/1/50/" + i
+html = urlopen(url)
+
+response = urllib.request.urlopen(url) 
+json_str = response.read().decode("utf-8")
+json_object = json.loads(json_str)
+
+print(html.read().decode('UTF-8'))
+df = pd.json_normalize(json_object['DailyAverageAirQuality']['row'])
+
+#total_data.append(df)
+total_data = pd.concat([total_data,df],axis=0)
+one_data = pd.concat([total_data,df],axis=0)
+time.sleep(1)
+'''
+  if count == 366 :
+    dff = pd.DataFrame(one_data)
+    d_name = 'data' + str(i[0:4]) + ".csv"
+    dff.to_csv(d_name)
+    files.download(d_name)
+    one_data = pd.DataFrame(index=range(0,0), columns=['MSRDT_DE', 'MSRSTE_NM', 'NO2', 'O3', 'CO', 'SO2', 'PM10', 'PM25'])
+    count = 1
+  count += 1
+  '''
+
+total_data.to_csv("middata(20200101부터).csv")
+files.download("middata(20200101부터).csv")
+```
+
+###2.2 대기오염 데이터 전처리
+
+Airseoul_전처리.R
+```{r, eval=F}
+#******************************************************************************#
+#                                 필수 load
+#******************************************************************************#
+source('packages_need.R', encoding='utf-8')
+
+#******************************************************************************#
+#                 전처리를 위한 "크롤링 dataload" 및 "type setting"
+#******************************************************************************#
+#2010년 ~ 2020년 총 10년간 일별평균대기오염 데이터
+#2010년 ~ 2018년
+airdata0 = data.frame()
+for(i in 2010:2018) {
+  
+  path = paste0("./data/일별평균대기오염도_", i, ".xlsx")
+  data = read_excel(path)
+  airdata0 = rbind(airdata0, data)
+  
+}
+names(airdata0) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2","PM10","PM25")
+
+#2019년
+data1 <- read.csv(file="./data/일별평균대기오염도_2019.csv", encoding = "utf-8")
+names(data1) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2","PM10","PM25")
+
+#2020년 11월25일
+data2 <- read.csv(file="./data/일별평균대기오염도_2020.csv", encoding = "UTF-8")[,-1]
+names(data2) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2","PM10","PM25")
+
+#2010년~2020년 totaldata
+airdata0 = rbind(airdata0, data1, data2)
+
+write.csv(airdata0, "./data/totaldata.csv")
+#******************************************************************************#
+#                             결측치 유무 확인
+#                       1) 유무 확인 - 기본, naniar 활용
+#                       2) 시각화 - naniar, VIM 활용
+#                       3) 결측치 대체 - dplyr 활용
+#******************************************************************************#
+# totaldata 전체 결측치
+gg_miss_var(airdata0)
+table(is.na(airdata0)) # 53282 결측
+
+# 변수별 결측치
+x <- airdata0
+for(i in 1:length(x)){
+  na = sum(is.na(x[,i]))
+  cat("\n", i, "번째 변수의","결측치 합 =", na)
+}
+
+# 8번째 변수 PM25의 결측치 합 = 46287, 과거에는 초미세먼지 측정이 없어서 많은 결측치가 있음을 확인하였다. 우리 연구는 과거데이터가 필요하고 PM10이 있으므로 연구 목적에는 변함이 없다고 판단하여 PM25 변수는 제거하기로 하였다.
+x <- x[,-8]; cat("\n")
+
+# 전체
+gg_miss_var(x, show_pct = T) # 누락비율표시
+table(is.na(x)) # 6995, PM25결측치가 매우 많았음을 알 수 있다.
+# 측정소별
+gg_miss_var(x, facet = SGG) + labs(y = "Look at all the missing ones")
+
+# 각 행별로 NA가 포함된 행인지 아닌지를 반환
+# NA가 있을 경우 FALSE, is.na()와는 반대
+# NA가 있는 행의 개수 확인
+# sum(!complete.cases(x)) # 3189
+
+# 각 행 혹은 변수별로 NA값이 얼마나 있는지 UpSetR로 패턴 탐색
+gg_miss_upset(x)
+
+# NO2, O3, SO2, CO, PM10 고려하는 모든 피처에 결측값이 있다.
+# 센서데이터는 민감한 데이터로 대기오염 측정 센서의 오작동으로 결측치가 종종 발생된 것으로 생각된다. 이에 대하여 전후 5일 간(5주 간)의 평균 값으로 결측치를 대체하였다.
+# 5개 피처 모두 결측값을 가지는 경우가 696행이 있다.
+
+# x <- airdata0
+# 일별단위에서 주단위로 변경 후 결측치 대체
+
+# x$NO2 %>% mutate(NO2 = ifelse(is.na(NO2), mean(NO2, na.rm = TRUE), NO2))
+# NO2 변수의 값이 na일 경우 평균으로, 아닐 경우 그대로 유지한다는 코드(사용x)
+#******************************************************************************#
+#                               결측치 처리
+#                 SGG 통일 시킨 후에 일일 혹은 주단위 변경
+#******************************************************************************#
+# 일별데이터 처리시
+# x$DATE <- as.Date(as.character(x$DATE), format="%Y%m%d")
+# df10 <- x %>% filter(DATE < "2011-01-03")
+# df11 <- x %>% filter(DATE >= "2011-01-03" & DATE < "2012-01-02")
+# df12 <- x %>% filter(DATE >= "2011-01-03" & DATE < "2013-01-07")
+# df13 <- x %>% filter(DATE >= "2013-01-07" & DATE < "2014-01-06")
+# df14 <- x %>% filter(DATE >= "2014-01-06" & DATE < "2015-01-05")
+# df15 <- x %>% filter(DATE >= "2015-01-05" & DATE < "2016-01-04")
+# df16 <- x %>% filter(DATE >= "2016-01-04" & DATE < "2017-01-02")
+# df17 <- x %>% filter(DATE >= "2017-01-02" & DATE < "2018-01-01")
+# df18 <- x %>% filter(DATE >= "2018-01-01" & DATE < "2019-01-07")
+# df19 <- x %>% filter(DATE >= "2019-01-07" & DATE < "2020-01-06")
+# df20 <- x %>% filter(DATE >= "2020-01-06" & DATE <= "2020-11-25")
+#******************************************************************************#
+#주단위데이터 처리시
+x$week <- cut(x$DATE, breaks="week")
+x$week <- as.Date(as.character(x$week), format="%Y-%m-%d")
+df10 <- x %>% filter(week < "2011-01-03")
+df11 <- x %>% filter(week >= "2011-01-03" & week < "2012-01-02")
+df12 <- x %>% filter(week >= "2011-01-03" & week < "2013-01-07")
+df13 <- x %>% filter(week >= "2013-01-07" & week < "2014-01-06")
+df14 <- x %>% filter(week >= "2014-01-06" & week < "2015-01-05")
+df15 <- x %>% filter(week >= "2015-01-05" & week < "2016-01-04")
+df16 <- x %>% filter(week >= "2016-01-04" & week < "2017-01-02")
+df17 <- x %>% filter(week >= "2017-01-02" & week < "2018-01-01")
+df18 <- x %>% filter(week >= "2018-01-01" & week < "2019-01-07")
+df19 <- x %>% filter(week >= "2019-01-07" & week < "2020-01-06")
+df20 <- x %>% filter(week >= "2020-01-06" & week <= "2020-11-25")
+
+# unique(df10$SGG) # 40
+# unique(df11$SGG) # 40
+# unique(df12$SGG) # 40
+# unique(df13$SGG) # 40
+# unique(df14$SGG) # 40
+# unique(df15$SGG) # 40
+# unique(df16$SGG) # 39 홍지문 없어짐
+# unique(df17$SGG) # 39 홍지문 없어짐
+# unique(df18$SGG) # 46 new : 관악산 궁동 남산 북한산 세곡 행주 시흥대로
+# unique(df19$SGG) # 50 new : 마포아트센터 서울숲 올림픽공원 자연사박물관
+# unique(df20$SGG) # 50
+# which(unique(df19$SGG) == unique(df20$SGG))
+#******************************************************************************#
+# 공통으로 존재하는 측정소만 가져옴
+sgg <- as.vector(unique(df16$SGG))
+
+x$SGG <- as.character(x$SGG)
+x2 <- x[x$SGG %in% sgg, ]
+x2$SGG <- as.factor(x2$SGG)
+#******************************************************************************#
+#주단위데이터 처리시
+x2.week <- x2 %>%
+  group_by(SGG, week) %>%
+  summarise(NO2=mean(NO2, na.rm=T),
+            O3=mean(O3, na.rm=T),
+            CO=mean(CO, na.rm=T),
+            SO2=mean(SO2, na.rm=T),
+            PM10=mean(PM10, na.rm=T), .groups = 'drop')
+#******************************************************************************#
+# 없는 날짜 채우기
+# 주단위데이터 처리시
+df <- x2.week
+#******************************************************************************#
+# 일별데이터 처리시
+df <- x2
+#******************************************************************************#
+original <- seq(as.Date("2010-01-01"), as.Date("2020-11-25"), by = "days")
+for (i in 1:length(sgg)) {
+  
+  missing = as.Date(setdiff(original, unique(df[df$SGG==sgg[i],]$DATE)), origin = "1970-01-01")
+  d = data.frame(cbind(as.Date(missing, origin='1970-1-1'),as.character(sgg[i]), NA, NA, NA, NA, NA))
+  names(d) <- c("DATE", "SGG", "NO2", "O3", "CO", "SO2", "PM10")
+  d[,1] <- as.character(as.Date(as.integer(d[,1]), origin = '1970-1-1'))
+  #d[,2] <- as.Date(d[,2])
+  df = rbind(df, d)
+}
+#******************************************************************************#
+# 정렬 후 값 채우기
+df <- data.frame(df[order(df$DATE, df$SGG),])
+df[,3:7] <- as.numeric(unlist(df[,3:7]))
+#******************************************************************************#
+#결측치 평균 대체
+x2.week <- df
+df2 <- df
+num <- vector()
+for(i in 3:7){
+  indi <- which(is.na(df2[,i]))
+  for (j in indi){
+    se <- (j-5):(j+5)
+    
+    for(k in 1:length(se)) {
+      num[k] <- df2[se[k],i]
+    }
+    df2[j,i] <- mean(unlist(num), na.rm=T)
+    #print(x2.week[j,i])
+  }
+}
+sum(is.na(df2))
+#******************************************************************************#
+#이상치 대체
+dig <- diagnose_numeric(df2)
+min <- max <- numeric()
+for(i in 1:nrow(dig)){
+  min[i] <- dig[i,3] - IQR(df2[[i+2]])*1.5
+  max[i] <- dig[i,6] + IQR(df2[[i+2]])*1.5
+}
+
+st1 <- st2 <- numeric()
+for(i in 3:7){
+  for(j in 1:nrow(df2)) {
+    
+    if(df2[j,i] < min[[i-2]]) {
+      df2[j,i] = min[[i-2]]; st1<-c(st1,j)}
+    else if(df2[j,i] > max[[i-2]]) {
+      df2[j,i] = max[[i-2]]; st2<-c(st2,j)}
+    
+  }
+}
+#******************************************************************************#
+# write.csv(df2, "./data/airseoul_day.csv") # daily
+write.csv(df2, "./data/airseoul.csv") # week
+
+```
+
+###2.3 대기오염물질별 분리
+
+air_separate.R
+```{r, eval=F}
+#******************************************************************************#
+#                                 data load
+#******************************************************************************#
+AIR <- read.csv('./data/airseoul.csv', header = T)[,-1]
+AIR$SGG <- factor(AIR$SGG)
+AIR$week <- as.Date(AIR$week)
+#******************************************************************************#
+#                         대기오염물질별 데이터 분리
+#******************************************************************************#
+library(dplyr)
+library(tidyverse)
+
+getAIRS <- function(x,var) {
+  kind_ssg <<- as.character(unique(AIR$SGG))
+  sgg <- AIR[AIR$SGG==kind_ssg[x],]
+  result <- sgg[,c(var)]
+  return(data.frame(result))
+} 
+
+week <- unique(AIR$week)
+down_airdata <- function(air_metric="NO2",var) {
+  
+  result <- data.frame()
+  result <- rbind(getAIRS(1,var),result)
+  for( i in 2:length(kind_ssg)){
+  result <- cbind(result,getAIRS(i,var))
+  }
+  
+  result <- cbind(week,result)
+  names(result) <- c("week","강남구","강남대로","강동구","강변북로","강북구","강서구","공항대로"
+                     ,"관악구","광진구","구로구","금천구","노원구","도봉구","도산대로"
+                     ,"동대문구", "동작구","동작대로","마포구","서대문구","서초구","성동구"
+                     ,"성북구","송파구","신촌로","양천구","영등포구","영등포로","용산구"
+                     ,"은평구","정릉로","종로","종로구", "중구","중랑구","천호대로"
+                     , "청계천로","한강대로","홍릉로","화랑로")
+  
+  result %>% write_rds(paste0("./data/air_", air_metric, "_df.rds"))
+}
+
+down_airdata("NO2",3)
+down_airdata("O3",4)
+down_airdata("CO",5)
+down_airdata("SO2",6)
+down_airdata("PM10",7)
+
+no2 <- readRDS(file = "./data/air_NO2_df.rds")
+o3 <- readRDS(file = "./data/air_O3_df.rds")
+co <- readRDS(file = "./data/air_CO_df.rds")
+so2 <- readRDS(file = "./data/air_SO2_df.rds")
+pm10 <- readRDS(file = "./data/air_PM10_df.rds")
+
+```
+
+##3. 탐색적 데이터 분석
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(DT)
+```
+
+###3.1 NO2 
+
+NO2 서울 평균
+```{r}
+# 서울 평균
+week <- unique(AIR$week)
+no2.mean = data.frame("no2" = apply(no2[,-1],1,mean))
+no2.mean = cbind(week, no2.mean)
+
+# 전체 기간
+no2.mean %>% 
+  ggplot(aes(x=week, y=no2)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+no2.mean %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=no2)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+  no2.mean %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=no2)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+no2.mean %>% 
+  filter(week >= "2020-01-20") %>% 
+  ggplot(aes(x=week, y=no2)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+```
+
+```{r}
+no2.mean %>% 
+      datatable()
+```
+
+NO2 데이터를 받아와서 ./data/air_NO2_df.rds로 저장했다. 이를 readRDS()로 불러와서 ggplot으로 시각화하고 각 구별(측정소별)로 NO2 오염도를 표로 나타낸다.
+```{r}
+no2 <- readRDS(file = "./data/air_NO2_df.rds")
+
+# 전체 기간
+no2 %>% 
+  gather(측정소, no2, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=no2, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+no2 %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, no2, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=no2, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+no2 %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, no2, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=no2, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+no2 %>% 
+  filter(week >= "2020-01-20") %>% 
+  gather(측정소, no2, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=no2, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+```
+
+```{r}
+no2 %>% 
+      datatable()
+```
+
+###3.2 O3 
+
+O3 서울 평균
+```{r}
+# 서울 평균
+week <- unique(AIR$week)
+o3.mean = data.frame("o3" = apply(o3[,-1],1,mean))
+o3.mean = cbind(week, o3.mean)
+
+# 전체 기간
+o3.mean %>% 
+  ggplot(aes(x=week, y=o3)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+o3.mean %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=o3)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+o3.mean %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=o3)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+o3.mean %>% 
+  filter(week >= "2020-01-20") %>% 
+  ggplot(aes(x=week, y=o3)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+```
+
+```{r}
+o3.mean %>% 
+      datatable()
+```
+
+O3 데이터를 받아와서 ./data/air_O3_df.rds로 저장했다. 이를 readRDS()로 불러와서 ggplot으로 시각화하고 각 구별(측정소별)로 O3 오염도를 표로 나타낸다.
+```{r}
+o3 <- readRDS(file = "./data/air_O3_df.rds")
+# 전체 기간
+o3 %>% 
+  gather(측정소, o3, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=o3, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+o3 %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, o3, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=o3, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+o3 %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, o3, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=o3, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+o3 %>% 
+  filter(week >= "2020-01-20") %>% 
+  gather(측정소, o3, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=o3, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+```
+```{r}
+o3 %>% 
+      datatable()
+```
+
+```{r}
+#정릉로(성북구) 종로 홍릉로(동대문구) <-> 서초구 구로구
+#정릉로, 구로구
+which(kind_ssg=="정릉로") # 30
+which(kind_ssg=="구로구") # 10
+
+# --> analysis_O3_sgg10.R --> .RData 가지고 분석 및 예측 analysis_O3.R
+# --> analysis_O3_sgg30.R --> .RData 가지고 분석 및 예측 analysis_O3.R
+```
+
+###3.3 CO 
+
+CO 서울 평균
+```{r}
+# 서울 평균
+week <- unique(AIR$week)
+co.mean = data.frame("co" = apply(co[,-1],1,mean))
+co.mean = cbind(week, co.mean)
+
+# 전체 기간
+co.mean %>% 
+  ggplot(aes(x=week, y=co)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+co.mean %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=co)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+co.mean %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=co)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+co.mean %>% 
+  filter(week >= "2020-01-20") %>% 
+  ggplot(aes(x=week, y=co)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+```
+
+```{r}
+co.mean %>% 
+      datatable()
+```
+
+CO 데이터를 받아와서 ./data/air_CO_df.rds로 저장했다. 이를 readRDS()로 불러와서 ggplot으로 시각화하고 각 구별(측정소별)로 CO 오염도를 표로 나타낸다.
+```{r}
+co <- readRDS(file = "./data/air_CO_df.rds")
+# 전체 기간
+co %>% 
+  gather(측정소, co, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=co, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+co %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, co, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=co, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+co %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, co, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=co, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+co %>% 
+  filter(week >= "2020-01-20") %>% 
+  gather(측정소, co, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=co, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+```
+
+```{r}
+co %>% 
+      datatable()
+```
+
+###3.4 SO2 
+
+SO2 서울 평균
+```{r}
+# 서울 평균
+week <- unique(AIR$week)
+so2.mean = data.frame("so2" = apply(so2[,-1],1,mean))
+so2.mean = cbind(week, so2.mean)
+
+# 전체 기간
+so2.mean %>% 
+  ggplot(aes(x=week, y=so2)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+so2.mean %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=so2)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+so2.mean %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=so2)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+so2.mean %>% 
+  filter(week >= "2020-01-20") %>% 
+  ggplot(aes(x=week, y=so2)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+```
+
+```{r}
+so2.mean %>% 
+  datatable()
+```
+
+SO2 데이터를 받아와서 ./data/air_SO2_df.rds로 저장했다. 이를 readRDS()로 불러와서 ggplot으로 시각화하고 각 구별(측정소별)로 SO2 오염도를 표로 나타낸다.
+```{r}
+so2 <- readRDS(file = "./data/air_SO2_df.rds")
+# 전체 기간
+so2 %>% 
+  gather(측정소, so2, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=so2, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+so2 %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, so2, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=so2, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+so2 %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, so2, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=so2, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+so2 %>% 
+  filter(week >= "2020-01-20") %>% 
+  gather(측정소, so2, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=so2, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+```
+
+```{r}
+so2 %>% 
+      datatable()
+```
+
+###3.5 PM10 
+
+PM10 서울 평균
+```{r}
+# 서울 평균
+week <- unique(AIR$week)
+pm10.mean = data.frame("pm10" = apply(pm10[,-1],1,mean))
+pm10.mean = cbind(week, pm10.mean)
+
+# 전체 기간
+pm10.mean %>% 
+  ggplot(aes(x=week, y=pm10)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+pm10.mean %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=pm10)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+pm10.mean %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  ggplot(aes(x=week, y=pm10)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+pm10.mean %>% 
+  filter(week >= "2020-01-20") %>% 
+  ggplot(aes(x=week, y=pm10)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m-%d") +
+  labs(x="") +
+  theme_minimal()
+```
+
+```{r}
+pm10.mean %>% 
+  datatable()
+```
+
+PM10 데이터를 받아와서 ./data/air_PM10_df.rds로 저장했다. 이를 readRDS()로 불러와서 ggplot으로 시각화하고 각 구별(측정소별)로 PM10 오염도를 표로 나타낸다.
+```{r}
+pm10 <- readRDS(file = "./data/air_PM10_df.rds")
+# 전체 기간
+pm10 %>% 
+  gather(측정소, pm10, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=pm10, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 3년 (2020년 전)
+pm10 %>% 
+  filter(week >= "2017-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, pm10, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=pm10, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 최근 1년 (2020년 전)
+pm10 %>% 
+  filter(week >= "2019-01-20" & week < "2020-01-20") %>% 
+  gather(측정소, pm10, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=pm10, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+
+# 2020년(타겟년도)
+pm10 %>% 
+  filter(week >= "2020-01-20") %>% 
+  gather(측정소, pm10, -week, convert = TRUE) %>% 
+  ggplot(aes(x=week, y=pm10, group=측정소, color=측정소)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_labels = "%y-%m") +
+  labs(x="") +
+  theme_minimal()
+```
+
+```{r}
+pm10 %>% 
+      datatable()
+```
+
+
