@@ -195,5 +195,5 @@ for(i in 3:7){
   }
 }
 #******************************************************************************#
-# write.csv(df2, "./data/air/airseoul_day.csv") # daily
-write.csv(df2, "./data/air/airseoul.csv") # week
+# write.csv(df2, "./data/airseoul_day.csv") # daily
+write.csv(df2, "./data/airseoul.csv") # week

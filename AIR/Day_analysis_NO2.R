@@ -9,8 +9,8 @@
 #******************************************************************************#
 #                                 필수 load
 #******************************************************************************#
-source('packages_need.R', encoding='utf-8')    # 필수 패키지 load
-source('Day_sgg_separate.R', encoding='utf-8') # daily data
+source('./AIR/packages_need.R', encoding='utf-8')    # 필수 패키지 load
+source('./AIR/Day_sgg_separate.R', encoding='utf-8') # daily data
 
 #******************************************************************************#
 #                         구별로 대기오염물질 no2 분석
