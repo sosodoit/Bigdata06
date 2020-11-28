@@ -1,14 +1,20 @@
-source('Day_sgg_separate.R', encoding='utf-8') # 일일 데이터
-source('packages_need.R', encoding='utf-8') #필요 패키지 존재
-#******************************************************************************#
+#                               * Comment here *
 #이거 전처리 할 때 써놓은 코드인데, 없는 날짜 볼 때 유용했던 거라.. 남겨둠!
 # https://lightblog.tistory.com/47 #숫자를 날짜로 바꾸기
 # original <- seq(as.Date("2009-12-28"), as.Date("2020-11-02"), by = "7 days")
 # as.Date(setdiff(original, unique(df$DATE)), origin = "1970-01-01") #없는 날짜.
 # as.Date(setdiff(original, unique(df[df$SGG=="강남구",]$DATE)), origin = "1970-01-01")
+
+
 #******************************************************************************#
-#                                 sgg1 분석                                    #
-#                             sgg1 no2 분석                                    #
+#                                 필수 load
+#******************************************************************************#
+source('packages_need.R', encoding='utf-8')    # 필수 패키지 load
+source('Day_sgg_separate.R', encoding='utf-8') # daily data
+
+#******************************************************************************#
+#                         구별로 대기오염물질 no2 분석
+#                          --> 39(측정소)*no2
 #******************************************************************************#
 freq <- 7
 
@@ -27,12 +33,9 @@ train.no2.xts <- xts(train.no2$NO2, order.by=train.no2$DATE, frequency = freq)
 # test
 test.no2.xts <- xts(test.no2$NO2, order.by=test.no2$DATE, frequency=freq)
 
-#******************************************************************************#
-#                                 no2 예측 
-#******************************************************************************#
+# ts <- xts
 train.no2.ts <- ts(train.no2.xts,start=c(2010,1), frequency= 365)
 test.no2.ts <- ts(test.no2.xts, start=c(2020,1), frequency= 365)
-
 #******************************************************************************#
 # 체크용
 # require(graphics)

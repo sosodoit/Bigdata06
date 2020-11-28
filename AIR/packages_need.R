@@ -1,19 +1,28 @@
-#***************************************# 
-#             필요패키지                # 
-#***************************************# 
+#******************************************************************************#
+#                                 필요한 패키지
+#******************************************************************************#
+# 데이터 로드
+library(readxl)
+
+# 데이터 EDA
+library(dplyr)
+library(naniar)
+library(VIM)
+library(dlookr) # 이상치
+
+# 주로 분석용
 library(tidyverse)
 library(lubridate)
 library(xts)
 library(forecast)
 library(mgcv)
-
-library(dplyr)
-library(ggplot2) #정적시계열
-library(dygraphs) #동적시계열 시각화할때 주로쓴데
-library(ggpmisc)
-#install.packages("DT")
-#library(DT)
-
 #library(devtools)
 #devtools::install_github("cardiomoon/ggGam")
 #library(ggGam)
+
+# 주로 시각화용
+library(ggplot2)  #정적 시계열 시각화시
+library(dygraphs) #동적 시계열 시각화시
+library(ggpmisc)
+#library(DT)
+#******************************************************************************#
