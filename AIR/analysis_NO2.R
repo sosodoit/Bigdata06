@@ -1,23 +1,20 @@
-source('./AIR/sgg_separate.R', encoding='utf-8') # 주별 데이터
-source('./AIR/packages_need.R', encoding='utf-8') #필요 패키지 존재
-#******************************************************************************#
+#                               * Comment here *
 #이거 전처리 할 때 써놓은 코드인데, 없는 날짜 볼 때 유용했던 거라.. 남겨둠!
 # https://lightblog.tistory.com/47 #숫자를 날짜로 바꾸기
 # original <- seq(as.Date("2009-12-28"), as.Date("2020-11-02"), by = "7 days")
-# as.Date(setdiff(original, unique(df$week)), origin = "1970-01-01") #없는 날짜.
-# as.Date(setdiff(original, unique(df[df$SGG=="강남구",]$week)), origin = "1970-01-01")
-#******************************************************************************#
-# 아래 코드가 맞다면 
-# for문으로 
+# as.Date(setdiff(original, unique(df$DATE)), origin = "1970-01-01") #없는 날짜.
+# as.Date(setdiff(original, unique(df[df$SGG=="강남구",]$DATE)), origin = "1970-01-01")
 
-# for ( i in sgg ){
-#gangnam_NO2 <- df[df$SGG == i,]$NO2
-#}
 
-# 덧씌워서 하면 ok
 #******************************************************************************#
-#                                 sgg1 분석                                    #
-#                             sgg1 no2 분석                                    #
+#                                 필수 load
+#******************************************************************************#
+source('./AIR/packages_need.R', encoding='utf-8')    # 필수 패키지 load
+source('./AIR/sgg_separate.R', encoding='utf-8')     # week data
+
+#******************************************************************************#
+#                         구별로 대기오염물질 no2 분석
+#                          --> 39(측정소)*no2
 #******************************************************************************#
 freq <- 365.25/7
 
