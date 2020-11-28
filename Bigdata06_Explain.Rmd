@@ -387,6 +387,8 @@ pm10 <- readRDS(file = "./data/air_PM10_df.rds")
 library(tidyverse)
 library(lubridate)
 library(DT)
+
+kind_ssg <<- as.character(unique(AIR$SGG))
 ```
 
 ###3.1 NO2 
@@ -716,6 +718,20 @@ co %>%
 ```{r}
 co %>% 
       datatable()
+```
+
+```{r}
+#구로구 화랑로 <-> 서초구 강남대로 도산대로(강남구)
+which(kind_ssg=="서초구") # 20
+which(kind_ssg=="구로구") # 10
+
+which(kind_ssg=="도산대로") #14
+which(kind_ssg=="화랑로")   #39
+
+# --> analysis_CO_sgg20.R --> .RData 가지고 분석 및 예측 analysis_CO.R
+# --> analysis_CO_sgg10.R --> .RData 가지고 분석 및 예측 analysis_CO.R
+# --> analysis_CO_sgg14.R --> .RData 가지고 분석 및 예측 analysis_CO.R
+# --> analysis_CO_sgg39.R --> .RData 가지고 분석 및 예측 analysis_CO.R
 ```
 
 ###3.4 SO2 

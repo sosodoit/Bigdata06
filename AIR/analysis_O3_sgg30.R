@@ -30,7 +30,7 @@ f.o3 <- function(tr, te){
     mod_tbats = tbats(o3.tr, ic='aicc', seasonal.periods=c(7,365.25)),
     mod_bats = bats(o3.tr, ic='aicc', seasonal.periods=c(7,365.25)),
     mod_arima = auto.arima(o3.tr, ic='aicc', stepwise=FALSE)
-    
+
   )
   
   forecasts <<- lapply(mod_lst, forecast, 330)
