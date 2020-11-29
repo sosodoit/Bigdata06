@@ -102,7 +102,7 @@ load(file="./data/timeseries_NO2_sgg38.RData") #홍릉로
 acc.no2.sgg38 <- acc
 ########################################################################################################
 #PM10
-load(file="./data/analysis_PM10.RData") #
+load(file="./data/analysis_PM10.RData") # 먼지모름
 acc.pm10.sgg <- acc
 
 
@@ -122,6 +122,10 @@ plot(test.pm10.ts[,2], xlim = c(2009, 2021), col = "red", ylim = c(0, 90))
 #O3
 load(file="./data/analysis_O3_sgg10.RData") #구로구
 acc.o3.sgg10 <- acc
+load(file="./data/analysis_O3_sgg16.RData") #동작구
+acc.o3.sgg16 <- acc
+load(file="./data/analysis_O3_sgg28.RData") #용산구
+acc.o3.sgg28 <- acc
 load(file="./data/analysis_O3_sgg30.RData") #정릉로
 acc.o3.sgg30 <- acc
 load(file="./data/analysis_O3_sgg36.RData") #청계천로
