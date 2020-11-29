@@ -22,8 +22,8 @@ source('./AIR/packages_need.R', encoding='utf-8') #필요 패키지 존재
 freq <- 365.25/7
 
 # 여기 고치기
-train.no2 <- sgg1[,c(2,3)]
-test.no2 <- sgg1.te[,c(2,3)]
+train.no2 <- sgg2[,c(2,6)]
+test.no2 <- sgg2.te[,c(2,6)]
 #******************************************************************************#
 #                            1. 시계열 데이터 변환                                
 #******************************************************************************#
@@ -89,8 +89,8 @@ train.no2.ts %>% ets(lambda=BoxCox.lambda(train.no2.ts)) %>% checkresiduals()
 train.no2.ts %>% ets(lambda=BoxCox.lambda(train.no2.ts)) %>% forecast() %>% autoplot()
 
 ### 2. ARIMA 모형
-train.no2.ts %>% auto.arima() %>% checkresiduals()
-train.no2.ts %>% auto.arima() %>% forecast() %>% autoplot()
+#train.no2.ts %>% auto.arima() %>% checkresiduals()
+#train.no2.ts %>% auto.arima() %>% forecast() %>% autoplot()
 
 ### 3. TBATS 모형
 train.no2.ts %>% tbats() %>% checkresiduals()
@@ -98,15 +98,27 @@ train.no2.ts %>% tbats() %>% forecast() %>% autoplot()
 #******************************************************************************#
 #                           no2 예측모형 선정과 예측
 #******************************************************************************#
-mod_lst <- list (
-  #mod_arima = auto.arima(tr, ic='aicc', stepwise=FALSE),
-  mod_exponential = ets(train.no2.ts, ic='aicc', restrict=FALSE),
-  mod_neural = nnetar(train.no2.ts),
-  mod_tbats = tbats(train.no2.ts, ic='aicc', seasonal.periods=52),
-  mod_bats = bats(train.no2.ts, ic='aicc', seasonal.periods=52),
-  #mod_stl = stlm(train, s.window=12, ic='aicc', robust=TRUE, method='ets'),
-  mod_sts = StructTS(train.no2.ts)
-)
+mod_arima = auto.arima(train.no2.ts, ic='aicc', stepwise=FALSE)
+mod_exponential = ets(train.no2.ts, ic='aicc', restrict=FALSE)
+mod_neural = nnetar(train.no2.ts)
+mod_tbats = tbats(train.no2.ts, ic='aicc', seasonal.periods=c(7,365.25))
+mod_bats = bats(train.no2.ts, ic='aicc', seasonal.periods=c(7,365.25))
+mod_stl = stlm(train, s.window=12, ic='aicc', robust=TRUE, method='ets')
+mod_sts = StructTS(train.no2.ts)
+
+# mod_lst <- list (
+#   mod_arima = auto.arima(train.no2.ts, ic='aicc', stepwise=FALSE),
+#   mod_exponential = ets(train.no2.ts, ic='aicc', restrict=FALSE),
+#   mod_neural = nnetar(train.no2.ts),
+#   mod_tbats = tbats(train.no2.ts, ic='aicc', seasonal.periods=c(7,365.25)),
+#   mod_bats = bats(train.no2.ts, ic='aicc', seasonal.periods=c(7,365.25)),
+#   mod_stl = stlm(train, s.window=12, ic='aicc', robust=TRUE, method='ets'),
+#   mod_sts = StructTS(train.no2.ts)
+# )
+
+mod_lst <- list(mod_arima, mod_exponential, mod_neural, mod_tbats,
+                mod_bats, mod_stl, mod_sts)
+
   # gam추가예정
   # stl은 왜 오류나는지 모르겠음.
   # stlm은 비계절성의 시계열 데이터에 대해서 ETS(A,N,N) 모형을 추정한다.
@@ -161,16 +173,18 @@ train.no2.ts %>% StructTS() %>% forecast(h=5) %>%
 #                           모형 진단(모형 타당성 검정)
 #******************************************************************************#
 diff = diff(train.no2.ts)
-auto.arima(train.no2.ts)
-model <- arima(train.no2.ts, order = c(0,1,1), seasonal = list(order = c(0,0,2))) #####확인
-model
+#fit.arima = auto.arima(train.no2.ts)
+#model <- arima(train.no2.ts, order = c(0,1,1), seasonal = list(order = c(0,0,2))) #####확인
+#model
 #******************************************************************************#
 # -1) 자기상관함수에 의한 모형 진단
-tsdiag(model)
+##tsdiag(model)
 # -2) Box-Ljung에 의한 잔차형 모형 진단
-Box.test(model$residuals, lag = 1, type = "Ljung")
+##Box.test(model$residuals, lag = 1, type = "Ljung")
 # 모형의 잔차를 이용하여 카이제곱검정 방법으로 시계열 모형이 통계적으로 적절한지 검정
 # p-value가 0.05이상이면 모형이 통계적으로 적절
+
+# arima(train.no2.ts, order = fit.arima$arma)
 
 #******************************************************************************#
 #******************************************************************************#
@@ -179,14 +193,16 @@ Box.test(model$residuals, lag = 1, type = "Ljung")
 #******************************************************************************#
 # forecast(model) # 디폴트 : 향후 2개 예측
 # h = ifelse(frequency(object) > 1, 2 * frequency(object), 10)
-forecast(model,11) 
+##forecast(model,11) 
 # 우리는 11개월치만 예상해야되는데, 왜..2*frequency라 써있으면서 11개가 추정되는지 몰겠음.4*11
+
 par(mfrow = c(1,2))
 pre <- forecast(model, h = 44) 
 plot(pre, ylim = c(0,0.08), xlim = c(2009,2022))
 plot(forecast(model),ylim = c(0,0.08), xlim = c(2009,2022))
 par(new = TRUE)
 plot(test.no2.ts, xlim = c(2009,2022),ylim = c(0,0.08), col = "red") ####################왜지...
+
 #******************************************************************************#
 # 정상성 시계열의 계절형 : 분해하는건 똑같아보이는데.. 그래프가 좀 다르게나옴
 ts_feature <- stl(train.no2.ts, s.window = "periodic")
@@ -283,4 +299,4 @@ dygraph(airpoll_stocks, ylab="PM10", main="sgg별 PM10") %>%
   dyRangeSelector()
 
 # 저장!!!
-#save.image(file = "./timeseries_NO2.RData")
+save.image(file = "./rdata/timeseries_NO2_sgg1.RData")
