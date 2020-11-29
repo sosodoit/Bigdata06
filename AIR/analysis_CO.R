@@ -59,10 +59,10 @@ save.image(file = "./data/analysis_CO_sgg39.RData")
 
 #******************************************************************************#
 # 하나씩 로드 후 분석 및 예측
-load( "./analysis_CO_sgg10.RData" )
-load( "./analysis_CO_sgg20.RData" )
-load( "./analysis_CO_sgg14.RData" )
-load( "./analysis_CO_sgg39.RData" )
+load( "./data/analysis_CO_sgg10.RData" )
+load( "./data/analysis_CO_sgg20.RData" )
+load( "./data/analysis_CO_sgg14.RData" )
+load( "./data/analysis_CO_sgg39.RData" )
 
 #                          2. 모형 전 시계열 데이터 진단
 #******************************************************************************#

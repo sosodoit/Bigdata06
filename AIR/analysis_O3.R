@@ -57,8 +57,8 @@ save.image(file = "./data/analysis_O3_sgg30.RData")
 
 #******************************************************************************#
 # 하나씩 로드 후 분석 및 예측
-load( "./analysis_O3_sgg10.RData" )
-load( "./analysis_O3_sgg30.RData" )
+load( "./data/analysis_O3_sgg10.RData" )
+load( "./data/analysis_O3_sgg30.RData" )
 
 #                          2. 모형 전 시계열 데이터 진단
 #******************************************************************************#
