@@ -1,9 +1,9 @@
 #******************************************************************************#
 #                                 필수 load
 #******************************************************************************#
-source('./AIR/packages_need.R', encoding='utf-8')    # 필수 패키지 load
-source('./AIR/sgg_separate.R', encoding='utf-8')     # week data
-
+#source('./AIR/packages_need.R', encoding='utf-8')    # 필수 패키지 load
+#source('./AIR/sgg_separate.R', encoding='utf-8')     # week data
+load( "./analysis_PM10.RData" )
 #******************************************************************************#
 #                         구별로 대기오염물질 pm10 분석
 #                          --> 39(측정소)*pm10
@@ -46,10 +46,18 @@ f.pm10 <- function(tr, te){
   acc <<- acc[order(acc[,'MASE']),] %>% round(2)
 }
 
+#save.image(file = "./analysis_PM10.RData")
+
 f.pm10(sgg1, sgg1.te)
 save.image(file = "./data/analysis_PM10.RData")
 f.pm10(sgg39, sgg39.te)
 save.image(file = "./data/analysis_PM10_sgg39.RData")
+
+f.pm10(sgg10, sgg10.te)
+save.image(file = "./data/analysis_PM10_sgg10.RData")
+f.pm10(sgg14, sgg14.te)
+save.image(file = "./data/analysis_PM10_sgg14.RData")
+
 
 
 #******************************************************************************#
