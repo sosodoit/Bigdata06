@@ -78,7 +78,7 @@ sgg_lst.te <- list(sgg1.te, sgg2.te, sgg3.te, sgg4.te, sgg5.te, sgg6.te, sgg7.te
 for ( i in 1:length(kind_ssg)) {
   area <- paste0("sgg", i) # 이걸로 호출하는 방법을 생각해보겠음.. 잘안되네용..
   
-  f.no2(sgg_lst[i], sgg_lst.te[i])
+  f.no2(sgg_lst[[i]], sgg_lst.te[[i]])
   save.image(file = paste0("./data/analysis_NO2_",area,".RData"))
 }
 
