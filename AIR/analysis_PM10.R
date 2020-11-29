@@ -1,18 +1,9 @@
-#                               * Comment here *
-#이거 전처리 할 때 써놓은 코드인데, 없는 날짜 볼 때 유용했던 거라.. 남겨둠!
-# https://lightblog.tistory.com/47 #숫자를 날짜로 바꾸기
-# original <- seq(as.Date("2009-12-28"), as.Date("2020-11-02"), by = "7 days")
-# as.Date(setdiff(original, unique(df$DATE)), origin = "1970-01-01") #없는 날짜.
-# as.Date(setdiff(original, unique(df[df$SGG=="강남구",]$DATE)), origin = "1970-01-01")
-
-
 #******************************************************************************#
 #                                 필수 load
 #******************************************************************************#
 source('./AIR/packages_need.R', encoding='utf-8')    # 필수 패키지 load
 source('./AIR/sgg_separate.R', encoding='utf-8')     # week data
-load( "./analysis_PM10.RData" )
-load( "./analysis_PM10_sgg39.RData" )
+
 #******************************************************************************#
 #                         구별로 대기오염물질 pm10 분석
 #                          --> 39(측정소)*pm10
@@ -23,56 +14,15 @@ f.pm10 <- function(tr, te){
   
   train.pm10 <<- tr[,c(2,7)]
   test.pm10 <<- te[,c(2,7)]
-  
-  #                            1. 시계열 데이터 변환
-  #******************************************************************************#
-  # msts <- msts(train.pm10.xts, seasonal.periods = c(7,365.25), start = decimal_date(as.Date("2010-01-01")))
-  # plot(msts, main="Weekly PM10", xlab="Week", ylab="Weekly PM10")
 
   train.pm10.ts <<- ts(train.pm10, start=decimal_date(as.Date("2010-01-01")), frequency= freq)
   test.pm10.ts <<- ts(test.pm10, start=decimal_date(as.Date("2020-01-01")), frequency= freq)
 
-  #                          2. 모형 전 시계열 데이터 진단
-  #******************************************************************************#
-  autoplot(train.pm10.ts[,2])
-  ggAcf(train.pm10.ts[,2]) + ggtitle("PM10 자기상관함수(ACF)")
-  Box.test(train.pm10.ts[,2], lag = 12, fitdf = 0, type = "Lj")
-  
-  #                           2.1 자기상관함수 시각화
-  #******************************************************************************#
-  acf(train.pm10.ts[,2], main = "자기상관함수", col = "red")
-  pacf(train.pm10.ts[,2], main = "부분자기상관함수", col = "blue")
-  
-  #                   2.2 시계열 분해와 변동 요인 제거 + 그래프                     
-  #                               기본 시계열 분해                               #
-  #******************************************************************************#
-  m <<- decompose(train.pm10.ts[,2])
-  attributes(m)
-  plot(m)
-
-  plot(train.pm10.ts[,2] - m$seasonal, ylim = c(-30,90),  ylab="", main="PM10") # 계절성 제거된 그래프
-  lines(train.pm10.ts[,2] - m$trend, col = "blue")                 # 추세요인 제거 그래프
-  lines(train.pm10.ts[,2] - m$seasonal - m$trend, col = "red") # 불규칙 요인만 출력
-  
-  #                              2.3 차분 시각화 
-  #******************************************************************************#
-  par(mfrow=c(2,1))
-  plot(diff(train.pm10.ts[,2], differences = 1),  ylab="", main="1차 차분")
-  plot(diff(train.pm10.ts[,2], differences = 12), ylab="", main="12차 차분")
-  par(mfrow=c(1,1))
-  
-  # dif1 <<- diff(train.pm10.ts[,2], differences = 1)
-  # m2 <<- decompose(dif1)
-  # plot(m2)
-  
-  #                           pm10 모형 선정과 예측
-  #******************************************************************************#
-  # 구별 for문 
   pm10.tr <<- train.pm10.ts[,2]
   pm10.te <<- test.pm10.ts[,2]
   
   mod_lst <<- list (
-  
+    
     mod_exponential = ets(pm10.tr, ic='aicc', restrict=FALSE),
     mod_sts = StructTS(pm10.tr),
     mod_neural = nnetar(pm10.tr),
@@ -87,28 +37,58 @@ f.pm10 <- function(tr, te){
   forecasts$naive <<- naive(train.pm10.ts, 330)
   forecasts$snaive <<- snaive(train.pm10.ts, 330)
   
-  # train.pm10$week <<- as.integer(train.pm10$week)
-  # mod_gam <- gam(pm10 ~ s(week), data = train.pm10, method = "REML")
-  # summary(mod_gam)
-  # par(mfrow=c(2,2))
-  # gam.check(mod_gam)
-  # par(mfrow=c(1,1))
-  # ggGam(mod_gam)
-  # a=predict(mod_gam, newdata=test.pm10$pm10)
-  
-  acc <- lapply(forecasts, function(f){
+  acc <<- lapply(forecasts, function(f){
     accuracy(f, pm10.te)[2,,drop=FALSE]
   })
   
-  acc <- do.call(rbind, acc)
-  row.names(acc) <- names(forecasts)
-  acc <- acc[order(acc[,'MASE']),] %>% round(2)
-  
+  acc <<- do.call(rbind, acc)
+  row.names(acc) <<- names(forecasts)
+  acc <<- acc[order(acc[,'MASE']),] %>% round(2)
 }
-#******************************************************************************#
-f.pm10(sgg1, sgg1.te) #8:41 - 10:10
-#******************************************************************************#
 
+f.pm10(sgg1, sgg1.te)
+save.image(file = "./data/analysis_PM10.RData")
+f.pm10(sgg39, sgg39.te)
+save.image(file = "./data/analysis_PM10_sgg39.RData")
+
+
+#******************************************************************************#
+# 하나씩 로드 후 분석 및 예측
+load( "./data/analysis_PM10.RData" )
+load( "./data/analysis_PM10_sgg39.RData" )
+
+#                          2. 모형 전 시계열 데이터 진단
+#******************************************************************************#
+autoplot(train.pm10.ts[,2])
+ggAcf(train.pm10.ts[,2]) + ggtitle("PM10 자기상관함수(ACF)")
+Box.test(train.pm10.ts[,2], lag = 12, fitdf = 0, type = "Lj")
+  
+#                           2.1 자기상관함수 시각화
+#******************************************************************************#
+acf(train.pm10.ts[,2], main = "자기상관함수", col = "red")
+pacf(train.pm10.ts[,2], main = "부분자기상관함수", col = "blue")
+  
+#                   2.2 시계열 분해와 변동 요인 제거 + 그래프                     
+#                               기본 시계열 분해                               #
+#******************************************************************************#
+m <<- decompose(train.pm10.ts[,2])
+attributes(m)
+plot(m)
+
+plot(train.pm10.ts[,2] - m$seasonal, ylim = c(-30,90),  ylab="", main="PM10") # 계절성 제거된 그래프
+lines(train.pm10.ts[,2] - m$trend, col = "blue")                 # 추세요인 제거 그래프
+lines(train.pm10.ts[,2] - m$seasonal - m$trend, col = "red") # 불규칙 요인만 출력
+  
+#                              2.3 차분 시각화 
+#******************************************************************************#
+par(mfrow=c(2,1))
+plot(diff(train.pm10.ts[,2], differences = 1),  ylab="", main="1차 차분")
+plot(diff(train.pm10.ts[,2], differences = 12), ylab="", main="12차 차분")
+par(mfrow=c(1,1))
+  
+# dif1 <<- diff(train.pm10.ts[,2], differences = 1)
+# m2 <<- decompose(dif1)
+# plot(m2)
 
 #                              최종모형적합 및 예측
 #******************************************************************************#
@@ -121,8 +101,8 @@ f.pm10(sgg1, sgg1.te) #8:41 - 10:10
 #   DT::datatable() %>% 
 #   DT::formatRound(c(1:5), digits=1)
 # 
-# #                           모형 진단(모형 타당성 검정)
-# #******************************************************************************#
+#                           모형 진단(모형 타당성 검정)
+#******************************************************************************#
 # diff = diff(pm10.tr)
 # auto.arima(pm10.tr)
 # model <- arima(pm10.tr, order = c(0,1,1), seasonal = list(order = c(0,0,2))) 
@@ -136,6 +116,7 @@ f.pm10(sgg1, sgg1.te) #8:41 - 10:10
 
 #                                 미래 예측
 #******************************************************************************#
+
 # forecast(model,330) 
 # par(mfrow = c(1,2))
 # pre <- forecast(model, h = 330) 
@@ -143,10 +124,12 @@ f.pm10(sgg1, sgg1.te) #8:41 - 10:10
 # plot(forecast(model),ylim = c(0,0.08), xlim = c(2009,2022))
 # par(new = TRUE)
 # plot(test.pm10.ts, xlim = c(2009,2022),ylim = c(0,0.08), col = "red")
-# 
-# #                                 예측정확도
-# #                   https://otexts.com/fppkr/accuracy.html
-# #******************************************************************************#
+
+
+#                                 예측정확도
+#                   https://otexts.com/fppkr/accuracy.html
+#******************************************************************************#
+
 # fit <- window(train.pm10.ts, deltat = 7, extend = TRUE)
 # fit1 <- meanf(fit)
 # fit2 <- rwf(fit)
@@ -164,7 +147,8 @@ f.pm10(sgg1, sgg1.te) #8:41 - 10:10
 # accuracy(fit1, test.pm10.ts)
 # #ts(rnorm(52), start = c(2014+9/365.25), frequency=365.25/7)
 # 
-# #******************************************************************************#
+
+#******************************************************************************#
 # par(mfrow = c(2,1))
 # par(mar = c(2,3,0,2), xaxs = 'i', yaxs = 'i')
 # 
@@ -175,6 +159,7 @@ f.pm10(sgg1, sgg1.te) #8:41 - 10:10
 #******************************************************************************#
 #                       forecast package 계절변동 시각화
 #******************************************************************************#
+
 # seasonplot(pm10.tr,
 #            year.labels=TRUE, year.labels.left=TRUE, col=1:20, pch=19)
 # 
@@ -188,8 +173,6 @@ f.pm10(sgg1, sgg1.te) #8:41 - 10:10
 #   plot(f, main="", xaxt="n", ylim = c(0,0.15))
 #   lines(pm10.te, col='red')
 # }
-
-#******************************************************************************#
 
 
 
@@ -220,5 +203,4 @@ f.pm10(sgg1, sgg1.te) #8:41 - 10:10
 #   dyOptions(colors = c("red","green")) %>%
 #   dyRangeSelector()
 
-save.image(file = "./analysis_PM10.RData")
 
