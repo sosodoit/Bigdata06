@@ -379,7 +379,19 @@ co <- readRDS(file = "./data/air_CO_df.rds")
 so2 <- readRDS(file = "./data/air_SO2_df.rds")
 pm10 <- readRDS(file = "./data/air_PM10_df.rds")
 
-head(dcast(yy, month~c("홍릉로","강남대로"), fun.aggregate = mean))
+# 월별 구 평균 : m.result
+library(reshape2) # reshape2 package 필요
+yy <- no2
+yy$week <- substr(yy$week,1,7)
+
+m.result <- data.frame(matrix(ncol = 1, nrow = 132))
+for (i in 1:length(kind_ssg)) {
+  k <- dcast(yy, week~., value.var = c(kind_ssg[i]), fun.aggregate = mean)
+  m.result <- cbind(m.result, k[,2])
+}
+m.result[,1] <- k[,1]
+names(m.result) <- names(no2)
+names(m.result)[1] <- "month"
 ```
 
 
