@@ -379,7 +379,9 @@ co <- readRDS(file = "./data/air_CO_df.rds")
 so2 <- readRDS(file = "./data/air_SO2_df.rds")
 pm10 <- readRDS(file = "./data/air_PM10_df.rds")
 
+head(dcast(yy, month~c("홍릉로","강남대로"), fun.aggregate = mean))
 ```
+
 
 ##3. 탐색적 데이터 분석
 
