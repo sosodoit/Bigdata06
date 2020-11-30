@@ -14,19 +14,17 @@ source('./AIR/sgg_separate.R', encoding='utf-8')
 # (시간 꽤 걸린 거 같은데 지금보니 10즐도 안되는 거 실화인가ㅏㅏㅏㅏㅏ )
 # 써놨다시피 2023년?까지도 예측되어있는데, 우선 2020년에 맞춰놨옹
 # 나중에 미래 이렇게 될 것이다 - 하려면 [1:51, ] 이거만 52~로 맞춰주면 됨!!
-
-# 지금생각하니 다른 모형은 이 함수가 안맞을 듯... ㅜ,ㅜ 그것도 짜놓겠음.. tbats/stl이 거의 주 인듯?
 #############################################
 
 
 
 #############################################
-# 예측값 월별 평균!!!! (tbats / stlm 경우) (5: tbats, 4: stl)
+# 예측값 월별 평균!!!! (5: tbats, 4: stl 3 : neural)
 #############################################
 mon.avg.tbats <- function() {
   
 day_vec <- c(0,31,60,91,121,152,182,213,244,274,305,335,366)
-a <- data.frame(predict(mod_lst[[5]]))
+a <- data.frame(predict(mod_lst[[2]]))
 d <- data.frame(cbind(rownames(a), a$Point.Forecast))[1:51,] #우선 2020년만 예측하려고 나머지 제외함!
 colnames(d) <- c("day", "co")
 d$day <- 365.25 * as.numeric(substr(d$day,5,8))
@@ -39,12 +37,39 @@ print(month.average)
 
 }
 #############################################
+#arima (위는 그림그리는 방법 / 아래는 월별 평균!)
+#mod_lst[[7]]$arma # arima는 8주밖에 예측을 안하네..
+#plot(predict(mod_lst[[7]]$model))
 
+# arima는 predict가 아니라 forecast쓰는 것 같음!
+library(forecast)
+f.pred <- forecast(mod_lst[[7]], 52) 
+plot(f.pred, xlim = c(2010, 2021), ylim = c(0, 0.01))
+par (new = TRUE)
+plot(test.so2.ts[,2], xlim = c(2010, 2021), ylim = c(0,0.01), col = "red")
 
+# $fitted : train 적합값
+# $mean : 예측값으로 보임..
+mon.avg.arima <- function() {
+  
+  f.pred <- forecast(mod_lst[[7]], 52) # 두번째 인자는 몇개의 주를 예측할 것이냐.
+  
+  day_vec <- c(0,31,60,91,121,152,182,213,244,274,305,335,366)
+  a <- data.frame(f.pred)
+  d <- data.frame(cbind(rownames(a), a$Point.Forecast))[1:51,] #우선 2020년만 예측하려고 나머지 제외함!
+  colnames(d) <- c("day", "co")
+  d$day <- 365.25 * as.numeric(substr(d$day,5,8))
+  
+  month.average <- NULL
+  for (i in 1:(length(day_vec)-1)) {
+    month.average <- c(month.average, mean(as.numeric(d[(d$day >= day_vec[i] & d$day<= day_vec[i+1]),]$co)))
+  }
+  print(month.average)
+  
+}
+#############################################
 
-
-
-
+# 여기에 드디어 co가 있소이다아ㅏ
 ########################################################################################################
 #CO
 co.plot <- function(k) { #그림
@@ -135,3 +160,8 @@ acc.o3.sgg36 <- acc
 plot(predict(mod_lst[[4]]), xlim = c(2010, 2021), ylim = c(0, 0.05))
 par(new = TRUE)
 plot(test.o3.ts[,2], xlim = c(2010, 2021), ylim = c(0, 0.05), col = "red")
+
+
+
+########################################################################################################
+# 하나의 거대 모형을 만들까..
