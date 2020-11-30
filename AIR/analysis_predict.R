@@ -7,12 +7,10 @@ source('./AIR/sgg_separate.R', encoding='utf-8')
 # comments (from cow)
 #############################################
 # 우선 rdata를 불러서 모형선정 및 예측그림을 파악함.
-# 현재 SO2, NO2는 그림이 2019년이 안그려짐.. 
-# 다시 돌리는 중이니, 다 돌면 넣고 확인해보겠3
 # 코드가 다 같아서, 틀리면 지우기 귀찮으니 맨 위가 CO인데 그것만 확인하면 됨!!!
 # 그림도 정말 내가 확인하기 위한 그림이고 ggplot을 해볼라했는데 검색하다가 시간만 가서 때려침
 # 난 그냥 plot도 이쁘다 생각해 :-) ㅋㅋㅋㅋ
-# 그리고 이 comment바로 밑에 있는 건 예측값 월별 평균 내는 코드얌(tbats 기준 - [[5]])
+# 그리고 이 comment바로 밑에 있는 건 예측값 월별 평균 내는 코드얌(tbats/stl기준)
 # (시간 꽤 걸린 거 같은데 지금보니 10즐도 안되는 거 실화인가ㅏㅏㅏㅏㅏ )
 # 써놨다시피 2023년?까지도 예측되어있는데, 우선 2020년에 맞춰놨옹
 # 나중에 미래 이렇게 될 것이다 - 하려면 [1:51, ] 이거만 52~로 맞춰주면 됨!!
@@ -23,7 +21,7 @@ source('./AIR/sgg_separate.R', encoding='utf-8')
 
 
 #############################################
-# 예측값 월별 평균!!!! (tbats 경우)
+# 예측값 월별 평균!!!! (tbats / stlm 경우) (5: tbats, 4: stl)
 #############################################
 mon.avg.tbats <- function() {
   
@@ -41,6 +39,8 @@ print(month.average)
 
 }
 #############################################
+
+
 
 
 
@@ -78,27 +78,27 @@ co.plot(mod_lst[[4]])
 # mod_stl
 ########################################################################################################
 #SO2
-load(file="./data/timeseries_SO2_sgg2.RData") #강남대로
+load(file="./data/analysis_SO2_sgg2.RData") #강남대로
 acc.so2.sgg2 <- acc
-load(file="./data/timeseries_SO2_sgg5.RData") #강북구
+load(file="./data/analysis_SO2_sgg5.RData") #강북구
 acc.so2.sgg5 <- acc
-load(file="./data/timeseries_SO2_sgg16.RData") #동작구
+load(file="./data/analysis_SO2_sgg16.RData") #동작구
 acc.so2.sgg16 <- acc
-load(file="./data/timeseries_SO2_sgg36.RData") #청계천로
+load(file="./data/analysis_SO2_sgg36.RData") #청계천로
 acc.so2.sgg36 <- acc
-plot(predict(mod_lst[[2]]), xlim = c(2009, 2021), ylim = c(0, 0.012))
+plot(predict(mod_lst[[3]]), xlim = c(2010, 2021), ylim = c(0, 0.012))
 par(new = TRUE)
-plot(test.no2.ts, xlim = c(2009, 2021), ylim = c(0, 0.012), col = "red")
+plot(test.so2.ts[,2], xlim = c(2010, 2021), ylim = c(0, 0.012), col = "red")
 
 ########################################################################################################
 #NO2
-load(file="./data/timeseries_NO2_sgg2.RData") #강남대로
+load(file="./data/analysis_NO2_sgg2.RData") #강남대로
 acc.no2.sgg2 <- acc
-load(file="./data/timeseries_NO2_sgg17.RData") #동작대로
+load(file="./data/analysis_NO2_sgg17.RData") #동작대로
 acc.no2.sgg17 <- acc
-load(file="./data/timeseries_NO2_sgg24.RData") #신촌로
+load(file="./data/analysis_NO2_sgg24.RData") #신촌로
 acc.no2.sgg24 <- acc
-load(file="./data/timeseries_NO2_sgg38.RData") #홍릉로
+load(file="./data/analysis_NO2_sgg38.RData") #홍릉로
 acc.no2.sgg38 <- acc
 ########################################################################################################
 #PM10
