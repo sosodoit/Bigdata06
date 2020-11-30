@@ -50,6 +50,12 @@ source('./AIR/Day_sgg_separate.R', encoding='utf-8') # daily data
 # 11.19 - 11.23 : 1.5
 # 11.24 - 11.25 : 2
 
+#******************************************************************************#
+# http://dongascience.donga.com/news.php?idx=40983
+# 코로나19 사회적 거리두기 따라 한반도 공기 맑다 탁했다 오락가락
+#******************************************************************************#
+
+
 
 df2 <- df %>% filter(DATE>="2020-01-01") %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
 sd <- numeric(nrow(df2))
@@ -73,16 +79,21 @@ df2$sd <- factor(df2$sd)
 # 범주형 --> 연속형 측정
 # 회귀 가변수 처리
 
+#오류
 lm.fit <- lm(sd ~ NO2 + O3 + CO + SO2 + PM10, data = df2) # 대기오염을 토대로 한, 사회적 거리두기 예측
+summary(lm.fit)
 glm.fit <- glm(sd ~NO2 + O3 + CO + SO2 + PM10, data = df2)
+summary(glm.fit)
 
 lm.fit.no2 <- lm(NO2 ~ sd + O3 + CO + SO2 + PM10, data = df2) # 질문 
 summary(lm.fit.no2)
+#사회적 거리두기가 NO2를 예측하는데에 있어 유의해보임.
 
 ts.sgg1 <- ts(sgg1.te, start = c(2020,1), end = c(2020,330), frequency = 365.25)
 plot(window(ts.sgg1, start = c(2020,1), end = c(2020,82)))
 
 
+#오류
 window(ts.sgg1, start = c(2020,01,01), end = c(2020,3,22))
 plot(window(ts.sgg1, start = c(2020,1,1), end = c(2020,3,22)))
 
