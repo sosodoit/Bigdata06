@@ -24,7 +24,7 @@ source('./AIR/sgg_separate.R', encoding='utf-8')
 mon.avg.tbats <- function() {
   
 day_vec <- c(0,31,60,91,121,152,182,213,244,274,305,335,366)
-a <- data.frame(predict(mod_lst[[2]]))
+a <- data.frame(predict(mod_lst[[5]]))
 d <- data.frame(cbind(rownames(a), a$Point.Forecast))[1:51,] #우선 2020년만 예측하려고 나머지 제외함!
 colnames(d) <- c("day", "co")
 d$day <- 365.25 * as.numeric(substr(d$day,5,8))
@@ -101,66 +101,161 @@ co.plot(mod_lst[[4]])
 # mod_tbats와 mod_stl이 거의 비등하게 좋은 성능을 가지는 것으로 보임.
 # mod_tbats
 # mod_stl
+
+# 대로와 구를 볼 때, 대로 CO가 높은 면을 보였었음.
+# 구와 대로 모두 감소하는 추세가 있는 것으로 보임
+# 이거 유의한 차이인지를 어떻게 확인하지? 
+# 최적의 시계열 모형을 각각 적어주어야 하는 것??
 ########################################################################################################
 #SO2
-load(file="./data/analysis_SO2_sgg2.RData") #강남대로
-acc.so2.sgg2 <- acc
-load(file="./data/analysis_SO2_sgg5.RData") #강북구
-acc.so2.sgg5 <- acc
-load(file="./data/analysis_SO2_sgg16.RData") #동작구
-acc.so2.sgg16 <- acc
-load(file="./data/analysis_SO2_sgg36.RData") #청계천로
-acc.so2.sgg36 <- acc
-plot(predict(mod_lst[[3]]), xlim = c(2010, 2021), ylim = c(0, 0.012))
+so2.plot <- function(k) {
+plot(predict(mod_lst[[k]]), xlim = c(2010, 2021), ylim = c(0, 0.012))
 par(new = TRUE)
 plot(test.so2.ts[,2], xlim = c(2010, 2021), ylim = c(0, 0.012), col = "red")
+}
+so2.plot2 <- function(k) {
+  plot(predict(forecast(mod_lst[[k]])), xlim = c(2010, 2021), ylim = c(0, 0.012))
+  par(new = TRUE)
+  plot(test.so2.ts[,2], xlim = c(2010, 2021), ylim = c(0, 0.012), col = "red")
+}
 
+par(mfrow = c(2,2))
+
+load(file="./data/analysis_SO2_sgg2.RData") #강남대로
+acc.so2.sgg2 <- acc
+#sts(2)
+so2.plot2(2)
+
+load(file="./data/analysis_SO2_sgg5.RData") #강북구
+acc.so2.sgg5 <- acc
+#tbats(5)
+so2.plot(5)
+
+load(file="./data/analysis_SO2_sgg16.RData") #동작구
+acc.so2.sgg16 <- acc
+#neural(3)
+so2.plot(3)
+
+load(file="./data/analysis_SO2_sgg36.RData") #청계천로
+acc.so2.sgg36 <- acc
+#neural
+so2.plot(3)
+
+# 제대로 예측하는 것 같지 않음.. 대체로 일직선으로 예측하는 경향
+# 예측한 것 보다 실제가 더 낮음..
+# 강북구는 2016년부터 감소가 진행되었던 상황인데, 더욱 줄어든 것으로 보임
+
+# 아 혹시, 2016년에 SO2 관련한 정책이 있나?? 모든 구에서 한번에 떨어지는 것으로 보임. 확인v
 ########################################################################################################
 #NO2
+no2.plot <- function(k) {
+  plot(predict(mod_lst[[k]]), xlim = c(2010, 2021), ylim = c(0, 0.08))
+  par(new = TRUE)
+  plot(test.no2.ts[,2], xlim = c(2010, 2021),  ylim = c(0, 0.08), col = "red")
+}
+no2.plot2 <- function(k) {
+  plot(forecast(mod_lst[[k]]), xlim = c(2010, 2021),  ylim = c(0, 0.08))
+  par(new = TRUE)
+  plot(test.no2.ts[,2], xlim = c(2010, 2021),  ylim = c(0, 0.08), col = "red")
+}
+no2.plot3 <- function(k) { #### arima는 분리해서 못그리나...
+  plot(mod_lst[[k]]$fitted, xlim = c(2010, 2021),  ylim = c(0, 0.08))
+  par(new = TRUE)
+  plot(forecast(mod_lst[[k]]), xlim = c(2010, 2021),  ylim = c(0, 0.08))
+  plot(test.no2.ts[,2], xlim = c(2010, 2021),  ylim = c(0, 0.08), col = "red")
+}
+
+par(mfrow = c(2,2))
+
 load(file="./data/analysis_NO2_sgg2.RData") #강남대로
 acc.no2.sgg2 <- acc
+# sts
+no2.plot2(2)
+
 load(file="./data/analysis_NO2_sgg17.RData") #동작대로
 acc.no2.sgg17 <- acc
+# tbats
+no2.plot(5)
+
 load(file="./data/analysis_NO2_sgg24.RData") #신촌로
 acc.no2.sgg24 <- acc
+# neural
+no2.plot(3)
+
 load(file="./data/analysis_NO2_sgg38.RData") #홍릉로
 acc.no2.sgg38 <- acc
+# arima
+no2.plot3(7)
+
+# 강남대로는 이상치가 많은 데이터였던 것으로 보임.
+# 홍릉로는 원래 변동폭이 차이가 없는 데이터
+# 예상보다 더 감소한 것으로 보임.
 ########################################################################################################
 #PM10
 load(file="./data/analysis_PM10.RData") # 먼지모름
 acc.pm10.sgg <- acc
 
+pm10.plot <- function(k) { #그림
+  plot(predict(mod_lst[[k]]), xlim = c(2009, 2021), ylim = c(0, 90))
+  par(new = TRUE)
+  plot(test.pm10.ts[,2], xlim = c(2009, 2021), col = "red", ylim = c(0, 90))
+}
+
+
 
 load(file="./data/analysis_PM10_sgg10.RData") #구로구
 acc.pm10.sgg10 <- acc
+# stl
+pm10.plot(4)
+
 load(file="./data/analysis_PM10_sgg14.RData") #도산대로
 acc.pm10.sgg14 <- acc
+# stl
+pm10.plot(4)
+
 load(file="./data/analysis_PM10_sgg39.RData") #화랑로
 acc.pm10.sgg39 <- acc
-# stl 모형이 좋은 것으로 보임.
-plot(predict(mod_lst[[4]]), xlim = c(2009, 2021), ylim = c(0, 90))
-par(new = TRUE)
-plot(test.pm10.ts[,2], xlim = c(2009, 2021), col = "red", ylim = c(0, 90))
+# stl
+pm10.plot(4)
 
+# 미세먼지 > 도로 구에 상관없이 비슷한 양상, 추세
+# 화랑로 미세먼지 이상치 무슨일..
 
 ########################################################################################################
 #O3
+o3.plot <- function(k) { #그림
+  plot(predict(mod_lst[[k]]), xlim = c(2010, 2021), ylim = c(0, 0.05))
+  par(new = TRUE)
+  plot(test.o3.ts[,2], xlim = c(2010, 2021), ylim = c(0, 0.05), col = "red")
+}
+
 load(file="./data/analysis_O3_sgg10.RData") #구로구
 acc.o3.sgg10 <- acc
+# stl
+o3.plot(4)
+
 load(file="./data/analysis_O3_sgg16.RData") #동작구
 acc.o3.sgg16 <- acc
+# stl
+o3.plot(4)
+
 load(file="./data/analysis_O3_sgg28.RData") #용산구
 acc.o3.sgg28 <- acc
+# stl
+o3.plot(4)
+
 load(file="./data/analysis_O3_sgg30.RData") #정릉로
 acc.o3.sgg30 <- acc
+# stl
+o3.plot(4)
+
 load(file="./data/analysis_O3_sgg36.RData") #청계천로
 acc.o3.sgg36 <- acc
+# arima
 
-# stl 모형이 좋은 것으로 보임.
-plot(predict(mod_lst[[4]]), xlim = c(2010, 2021), ylim = c(0, 0.05))
-par(new = TRUE)
-plot(test.o3.ts[,2], xlim = c(2010, 2021), ylim = c(0, 0.05), col = "red")
-
+# 거의 제대로된 예측.
+# 오존은 코로나와 상관없이 비슷한 추세를 보임.
+# 대로와 구 모두 비슷해보임. 
 
 
 ########################################################################################################
