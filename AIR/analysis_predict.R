@@ -33,8 +33,8 @@ month.average <- NULL
 for (i in 1:(length(day_vec)-1)) {
   month.average <- c(month.average, mean(as.numeric(d[(d$day >= day_vec[i] & d$day<= day_vec[i+1]),]$co)))
 }
-print(month.average)
-
+#print(month.average)
+return(month.average)
 }
 #############################################
 #arima (위는 그림그리는 방법 / 아래는 월별 평균!)
@@ -69,6 +69,83 @@ mon.avg.arima <- function() {
 }
 #############################################
 
+# 이거 rmd에 있던 구마다의 월별평균 가져와쑴!
+library(dplyr)
+library(tidyverse)
+
+getAIRS <- function(x,var) {
+  kind_ssg <<- as.character(unique(AIR$SGG))
+  sgg <- AIR[AIR$SGG==kind_ssg[x],]
+  result <- sgg[,c(var)]
+  return(data.frame(result))
+} 
+
+week <- unique(AIR$week)
+down_airdata <- function(air_metric="NO2",var) {
+  
+  result <- data.frame()
+  result <- rbind(getAIRS(1,var),result)
+  for( i in 2:length(kind_ssg)){
+    result <- cbind(result,getAIRS(i,var))
+  }
+  
+  result <- cbind(week,result)
+  names(result) <- c("week","강남구","강남대로","강동구","강변북로","강북구","강서구","공항대로"
+                     ,"관악구","광진구","구로구","금천구","노원구","도봉구","도산대로"
+                     ,"동대문구", "동작구","동작대로","마포구","서대문구","서초구","성동구"
+                     ,"성북구","송파구","신촌로","양천구","영등포구","영등포로","용산구"
+                     ,"은평구","정릉로","종로","종로구", "중구","중랑구","천호대로"
+                     , "청계천로","한강대로","홍릉로","화랑로")
+  
+  result %>% write_rds(paste0("./data/air_", air_metric, "_df.rds"))
+}
+
+down_airdata("NO2",3)
+down_airdata("O3",4)
+down_airdata("CO",5)
+down_airdata("SO2",6)
+down_airdata("PM10",7)
+
+no2 <- readRDS(file = "./data/air_NO2_df.rds")
+o3 <- readRDS(file = "./data/air_O3_df.rds")
+co <- readRDS(file = "./data/air_CO_df.rds")
+so2 <- readRDS(file = "./data/air_SO2_df.rds")
+pm10 <- readRDS(file = "./data/air_PM10_df.rds")
+
+# 월별 구 평균 : m.result
+library(reshape2) # reshape2 package 필요
+yy <- no2
+yy$week <- substr(yy$week,1,7)
+
+m.result <- data.frame(matrix(ncol = 1, nrow = 132))
+for (i in 1:length(kind_ssg)) {
+  k <- dcast(yy, week~., value.var = c(kind_ssg[i]), fun.aggregate = mean)
+  m.result <- cbind(m.result, k[,2])
+}
+m.result[,1] <- k[,1]
+names(m.result) <- names(no2)
+names(m.result)[1] <- "month"
+
+#m.result에 구마다의 실제값이 들어있음. 
+#ms.a가 예측값. 
+
+
+ms.a <- data.frame(matrix(NA, ncol = 1, nrow = 11))
+m.b <- data.frame(m.a[-12])
+for (i in 1:39) {
+  ms.a <- cbind(ms.a, m.b)
+}
+ms.a <- ms.a[,-1]
+m.res <- (m.result[m.result$month>='2020-01',-1])-ms.a 
+
+
+res.vec <- NULL
+for (i in 1:39) {
+  res.vec <- c(res.vec, m.res[,i])
+}
+plot(density(res.vec)) #분포를 그려봄 (구 상관없이 그려본것.)
+#(구마다의 차이에 의미를 두고 그려야 하나??)
+
 # 여기에 드디어 co가 있소이다아ㅏ
 ########################################################################################################
 #CO
@@ -84,7 +161,7 @@ par(mfrow = c(2,2)) # 그림 한 번에 슉 보도록!
 load(file="./data/analysis_CO_sgg10.RData") #구로구
 acc.co.sgg10 <- acc
 co.plot(mod_lst[[5]])
-mon.avg.tbats()
+m.a <- mon.avg.tbats()
 
 load(file="./data/analysis_CO_sgg14.RData") #도산대로
 acc.co.sgg14 <- acc
@@ -176,6 +253,7 @@ load(file="./data/analysis_NO2_sgg17.RData") #동작대로
 acc.no2.sgg17 <- acc
 # tbats
 no2.plot(5)
+m.a <- mon.avg.tbats()
 
 load(file="./data/analysis_NO2_sgg24.RData") #신촌로
 acc.no2.sgg24 <- acc
