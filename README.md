@@ -8,9 +8,9 @@
 
 - packages_need : 필요패키지모음
 
-**1) Airseoul_전처리**
+1) Airseoul_전처리
 
-**2) *EDA* **
+2) *EDA* 
 
   - air_separate : 물질별 분리
     
@@ -24,7 +24,7 @@
 
 예측이 목표니까 시계열분석 전 기본탐색 정도?
 
-**3) *analysis* **
+3) *analysis* 
   
   - analysis_NO2
 
@@ -38,7 +38,7 @@
 
 각 물질별 분석할 때 .rmd or original_EDA : 구별 대기질::NO2 현황 얘 그림가지고
 
-**4) analysis_predict**
+4) analysis_predict
 
 7개 모형 적합시도 및 예측시도
 
@@ -51,16 +51,13 @@
 ~~timeseries_past2~~
 
 ***
-**<u>AIRSD</u>**
-> 사회적거리두기
+**<u>AIRSD</u>** > 사회적거리두기
 
 ***
-~~<u>C19</u>
-> 코로나 크롤링 및 전처리~~
+~~<u>C19</u>~~ > 코로나 크롤링 및 전처리
 
 ***
-**<u>data</u>**
-> 모든 csv, RData, rds 등의 데이터 파일
+**<u>data</u>** > 모든 csv, RData, rds 등의 데이터 파일
 
 ***
 
