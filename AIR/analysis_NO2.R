@@ -79,7 +79,9 @@ for ( i in 1:length(kind_ssg)) {
   area <- paste0("sgg", i) # 이걸로 호출하는 방법을 생각해보겠음.. 잘안되네용..
   
   f.no2(sgg_lst[[i]], sgg_lst.te[[i]])
-  save.image(file = paste0("./data/analysis_NO2_",area,".RData"))
+  
+  #save.image(file = paste0("./data/analysis_NO2_",area,".RData"))
+  mod_lst %>% write_rds("./data/analysis_NO2_",area,".rds")
 }
 
 #******************************************************************************#
