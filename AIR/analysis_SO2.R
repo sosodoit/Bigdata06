@@ -31,19 +31,19 @@ f.so2 <- function(tr, te){
   
   mod_lst <<- list (
     
-    mod_exponential = ets(so2.tr, ic='aicc', restrict=FALSE),
-    mod_sts = StructTS(so2.tr),
-    mod_neural = nnetar(so2.tr),
-    mod_stl = stlm(so2.tr, ic='aicc', robust=TRUE, method='ets'),
-    mod_tbats = tbats(so2.tr, ic='aicc', seasonal.periods=c(7,365.25)),
-    mod_bats = bats(so2.tr, ic='aicc', seasonal.periods=c(7,365.25)),
+    # mod_exponential = ets(so2.tr, ic='aicc', restrict=FALSE),
+    # mod_sts = StructTS(so2.tr),
+    # mod_neural = nnetar(so2.tr),
+    # mod_stl = stlm(so2.tr, ic='aicc', robust=TRUE, method='ets'),
+    # mod_tbats = tbats(so2.tr, ic='aicc', seasonal.periods=c(7,365.25)),
+    # mod_bats = bats(so2.tr, ic='aicc', seasonal.periods=c(7,365.25)),
     mod_arima = auto.arima(so2.tr, ic='aicc', stepwise=FALSE)
     
   )
   
   forecasts <<- lapply(mod_lst, forecast, 330)
-  forecasts$naive <<- naive(train.so2.ts, 330)
-  forecasts$snaive <<- snaive(train.so2.ts, 330)
+  # forecasts$naive <<- naive(train.so2.ts, 330)
+  # forecasts$snaive <<- snaive(train.so2.ts, 330)
   
   acc <<- lapply(forecasts, function(f){
     accuracy(f, so2.te)[2,,drop=FALSE]
@@ -55,16 +55,34 @@ f.so2 <- function(tr, te){
   
 }
 
-f.so2(sgg10, sgg10.te) # 
-save.image(file = "./data/analysis_SO2_sgg10.RData")
-f.so2(sgg20, sgg20.te) # 
-save.image(file = "./data/analysis_SO2_sgg20.RData")
-f.so2(sgg14, sgg14.te) # 
-save.image(file = "./data/analysis_SO2_sgg14.RData")
-f.so2(sgg39, sgg39.te) # 
-save.image(file = "./data/analysis_SO2_sgg39.RData")
+# f.so2(sgg10, sgg10.te) # 
+# save.image(file = "./data/analysis_SO2_sgg10.RData")
+# f.so2(sgg20, sgg20.te) # 
+# save.image(file = "./data/analysis_SO2_sgg20.RData")
+# f.so2(sgg14, sgg14.te) # 
+# save.image(file = "./data/analysis_SO2_sgg14.RData")
+# f.so2(sgg39, sgg39.te) # 
+# save.image(file = "./data/analysis_SO2_sgg39.RData")
 
+# 구를 한번에 도는 코드 추가
+sgg_lst <- list(sgg1, sgg2, sgg3, sgg4, sgg5, sgg6, sgg7, sgg8, sgg9, sgg10,
+                sgg11, sgg12, sgg13, sgg14, sgg15, sgg16, sgg17, sgg18, sgg19, sgg20,
+                sgg21, sgg22, sgg23, sgg24, sgg25, sgg26, sgg27, sgg28, sgg29, sgg30,
+                sgg31, sgg32, sgg33, sgg34, sgg35, sgg36, sgg37, sgg38, sgg39)
 
+sgg_lst.te <- list(sgg1.te, sgg2.te, sgg3.te, sgg4.te, sgg5.te, sgg6.te, sgg7.te, sgg8.te, sgg9.te, sgg10.te,
+                   sgg11.te, sgg12.te, sgg13.te, sgg14.te, sgg15.te, sgg16.te, sgg17.te, sgg18.te, sgg19.te, sgg20.te,
+                   sgg21.te, sgg22.te, sgg23.te, sgg24.te, sgg25.te, sgg26.te, sgg27.te, sgg28.te, sgg29.te, sgg30.te,
+                   sgg31.te, sgg32.te, sgg33.te, sgg34.te, sgg35.te, sgg36.te, sgg37.te, sgg38.te, sgg39.te)
+
+for ( i in 1:length(kind_ssg)) {
+  area <- paste0("sgg", i) # 이걸로 호출하는 방법을 생각해보겠음.. 잘안되네용..
+  
+  f.so2(sgg_lst[[i]], sgg_lst.te[[i]])
+  
+  #save.image(file = paste0("./data/analysis_SO2_",area,".RData"))
+  mod_lst %>% write_rds("./data/analysis_SO2_",area,".rds")
+}
 #******************************************************************************#
 # 하나씩 로드 후 분석 및 예측
 load( "./analysis_SO2_sgg10.RData" )
