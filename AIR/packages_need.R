@@ -9,6 +9,7 @@ library(dplyr)
 library(naniar)
 library(VIM)
 library(dlookr) # 이상치
+library(reshape2)
 
 # 주로 분석용
 library(tidyverse)
@@ -16,6 +17,7 @@ library(lubridate)
 library(xts)
 library(forecast)
 library(mgcv)
+library(forecast)
 #library(devtools)
 #devtools::install_github("cardiomoon/ggGam")
 #library(ggGam)
