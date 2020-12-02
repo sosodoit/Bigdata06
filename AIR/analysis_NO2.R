@@ -31,12 +31,12 @@ f.no2 <- function(tr, te){
   
   mod_lst <<- list (
     
-    mod_exponential = ets(no2.tr, ic='aicc', restrict=FALSE),
-    mod_sts = StructTS(no2.tr),
-    mod_neural = nnetar(no2.tr),
-    mod_stl = stlm(no2.tr, ic='aicc', robust=TRUE, method='ets'),
-    mod_tbats = tbats(no2.tr, ic='aicc', seasonal.periods=c(7,365.25)),
-    mod_bats = bats(no2.tr, ic='aicc', seasonal.periods=c(7,365.25)),
+    #mod_exponential = ets(no2.tr, ic='aicc', restrict=FALSE),
+    #mod_sts = StructTS(no2.tr),
+    #mod_neural = nnetar(no2.tr),
+    #mod_stl = stlm(no2.tr, ic='aicc', robust=TRUE, method='ets'),
+    #mod_tbats = tbats(no2.tr, ic='aicc', seasonal.periods=c(7,365.25)),
+    #mod_bats = bats(no2.tr, ic='aicc', seasonal.periods=c(7,365.25)),
     mod_arima = auto.arima(no2.tr, ic='aicc', stepwise=FALSE)
     
   )
