@@ -17,7 +17,7 @@ source('./AIR/sgg_separate.R', encoding='utf-8')     # week data
 #                          --> 39(측정소)*no2
 #******************************************************************************#
 freq <- 365.25/7
-
+mod_lst <- list()
 f.no2 <- function(tr, te){
   
   train.no2 <<- tr[,c(2,3)]
