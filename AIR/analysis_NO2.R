@@ -55,14 +55,14 @@ f.no2 <- function(tr, te){
   
 }
 
-f.no2(sgg10, sgg10.te) # 
-save.image(file = "./data/analysis_NO2_sgg10.RData")
-f.no2(sgg20, sgg20.te) # 
-save.image(file = "./data/analysis_NO2_sgg20.RData")
-f.no2(sgg14, sgg14.te) # 
-save.image(file = "./data/analysis_NO2_sgg14.RData")
-f.no2(sgg39, sgg39.te) # 
-save.image(file = "./data/analysis_NO2_sgg39.RData")
+# f.no2(sgg10, sgg10.te) # 
+# save.image(file = "./data/analysis_NO2_sgg10.RData")
+# f.no2(sgg20, sgg20.te) # 
+# save.image(file = "./data/analysis_NO2_sgg20.RData")
+# f.no2(sgg14, sgg14.te) # 
+# save.image(file = "./data/analysis_NO2_sgg14.RData")
+# f.no2(sgg39, sgg39.te) # 
+# save.image(file = "./data/analysis_NO2_sgg39.RData")
 
 # 구를 한번에 도는 코드 추가
 sgg_lst <- list(sgg1, sgg2, sgg3, sgg4, sgg5, sgg6, sgg7, sgg8, sgg9, sgg10,
