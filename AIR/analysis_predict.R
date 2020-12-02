@@ -6,14 +6,35 @@ source('./AIR/predict_functions.R', encoding='utf-8')
 #m.result에 구마다의 실제값이 들어있음. 
 #ms.a가 예측값. 
 
-ms.a <- data.frame(matrix(NA, ncol = 1, nrow = 11))
-m.b <- data.frame(m.a[-12])
-for (i in 1:39) {
-  ms.a <- cbind(ms.a, m.b)
+# ms.a <- data.frame(matrix(NA, ncol = 1, nrow = 11))
+# m.b <- data.frame(m.a[-12])
+# for (i in 1:39) {
+#   ms.a <- cbind(ms.a, m.b)
+# }
+# m.result <- monthly.lst[[3]]
+# ms.a <- ms.a[,-1]
+# m.res <- (m.result[m.result$month>='2020-01',-1])-ms.a 
+
+#######################################################################################################
+#######################################################################################################
+m.a <- data.frame(matrix(ncol = 40, nrow = 11)) # 달마다의 예측값 평균
+names(m.a) <- name_ssg
+
+
+#######################################################################################################
+#######################################################################################################
+# 구 한번에 보는 코드
+for (i in 2:40) {
+  k <- (i- 1)
+  load(file=paste0("./data/analysis_CO_sgg", k, ".RData"))
+  #acc.co.sgg10 <- acc
+  co.plot.arima()
+  m.a[,i] <- data.frame(mon.avg.arima()[-12])
+  names(m.a) <- name_ssg
 }
-ms.a <- ms.a[,-1]
-m.res <- (m.result[m.result$month>='2020-01',-1])-ms.a 
-########################################################################################################
+
+#######################################################################################################
+#######################################################################################################
 #CO
 co.plot <- function(k) { #그림 1/3/4/5/6
   plot(predict(k), xlim = c(2010, 2021), ylim = c(0,1.1))
@@ -47,7 +68,7 @@ acc.co.sgg10 <- acc
 tbl.co[,1] <- getAIC(mod_lst)
 models[which.min(tbl.co[,1])]
 co.plot.arima()
-m.a <- mon.avg.tbats()
+m.a$구로구 <- data.frame("구로구" = mon.avg.arima()[-12])
 #arima
 
 load(file="./data/analysis_CO_sgg14.RData") #도산대로
