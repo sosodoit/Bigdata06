@@ -33,7 +33,8 @@ mon.avg.arima <- function() {
   for (i in 1:(length(day_vec)-1)) {
     month.average <- c(month.average, mean(as.numeric(d[(d$day >= day_vec[i] & d$day<= day_vec[i+1]),]$co)))
   }
-  print(month.average)
+  #print(month.average)
+  return(month.average)
 }
 
 ##################################################################################
@@ -90,6 +91,7 @@ down_airdata <- function(air_metric="NO2",var) {
 ##################################################################################
 # 데이터 불러오기
 ##################################################################################
+no2 <- o3 <- co <- so2 <- pm10 <- data.frame()
 getData <- function() {
   down_airdata("NO2",3)
   down_airdata("O3",4)
@@ -97,19 +99,18 @@ getData <- function() {
   down_airdata("SO2",6)
   down_airdata("PM10",7)
   
-  no2 <- readRDS(file = "./data/air_NO2_df.rds")
-  o3 <- readRDS(file = "./data/air_O3_df.rds")
-  co <- readRDS(file = "./data/air_CO_df.rds")
-  so2 <- readRDS(file = "./data/air_SO2_df.rds")
-  pm10 <- readRDS(file = "./data/air_PM10_df.rds")
+  no2 <<- readRDS(file = "./data/air_NO2_df.rds")
+  o3 <<- readRDS(file = "./data/air_O3_df.rds")
+  co <<- readRDS(file = "./data/air_CO_df.rds")
+  so2 <<- readRDS(file = "./data/air_SO2_df.rds")
+  pm10 <<- readRDS(file = "./data/air_PM10_df.rds")
 }
 
 ##################################################################################
 # 월별 구 평균 : monthly.lst에 각각의 물질에 대한 월별 평균이 들어간다.
 ##################################################################################
-library(reshape2) # reshape2 package 필요
+ # reshape2 package 필요
 monthly.average <- function(yy) {
-  getData()
   yy$week <- substr(yy$week,1,7)
   
   m.result <- data.frame(matrix(ncol = 1, nrow = 132))
@@ -122,6 +123,8 @@ monthly.average <- function(yy) {
   names(m.result)[1] <- "month"
   return (m.result)
 }
+getData()
+monthly.lst <- list()
 monthly.lst[[1]] <- monthly.average(no2)
 monthly.lst[[2]] <- monthly.average(o3)
 monthly.lst[[3]] <- monthly.average(co)
