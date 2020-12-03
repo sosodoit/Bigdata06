@@ -2,8 +2,8 @@
 #                                 필수 load
 #******************************************************************************#
 source('./AIR/packages_need.R', encoding='utf-8')    # 필수 패키지 load
+source('./arima/together_arima.R', encoding='utf-8') # arima list 가져오기
 source('./AIR/Day_sgg_separate.R', encoding='utf-8') # daily data
-
 #******************************************************************************#
 #                           사회적거리두기 변수 추가        
 #******************************************************************************#
@@ -79,20 +79,40 @@ save.image(file = "./data/사회적거리두기_전처리.RData")
 #******************************************************************************#
 # 개입분석을 위한 가변수 처리
 #******************************************************************************#
+library(astsa)
+I.1 <- ifelse(AIRSD$DATE < '2020-04-20',0, ifelse(AIRSD$DATE >= '2020-08-16', 0, 1))
+I.2.5 <- ifelse((AIRSD$DATE <= '2020-09-13' & AIRSD$DATE >= '2020-08-30'),1,0)
+I.1.5 <- ifelse((AIRSD$DATE >= '2020-03-22' & AIRSD$DATE <= '2020-04-19') |
+                  (AIRSD$DATE >= '2020-11-19' & AIRSD$DATE <= '2020-11-23'), 1, 0)
+I.2 <- ifelse((AIRSD$DATE >= '2020-08-16' & AIRSD$DATE <= '2020-08-29') |
+                (AIRSD$DATE >= '2020-09-14' & AIRSD$DATE <= '2020-10-11') |
+                (AIRSD$DATE >= '2020-11-24' & AIRSD$DATE <= '2020-11-25'), 1, 0)
 
-for (i in 2:40){
+for (i in 2:5){
   ddf <- df[df$SGG == name_ssg[i],]
+  ddf <- ddf[,c(2,6)]
+  
+  I.1 <- ifelse(ddf$DATE < '2020-04-20',0, ifelse(ddf$DATE >= '2020-08-16', 0, 1))
+  I.2.5 <- ifelse((ddf$DATE <= '2020-09-13' & ddf$DATE >= '2020-08-30'),1,0)
+  I.1.5 <- ifelse((ddf$DATE >= '2020-03-22' & ddf$DATE <= '2020-04-19') |
+                    (ddf$DATE >= '2020-11-19' & ddf$DATE <= '2020-11-23'), 1, 0)
+  I.2 <- ifelse((ddf$DATE >= '2020-08-16' & ddf$DATE <= '2020-08-29') |
+                  (ddf$DATE >= '2020-09-14' & ddf$DATE <= '2020-10-11') |
+                  (ddf$DATE >= '2020-11-24' & ddf$DATE <= '2020-11-25'), 1, 0)
+  
+  
+  
+  
+  ts.ddf <- ts(ddf, frequency =7) #, start = c(2010,1), end = c(2020,330), 
+  a <- arima.so2[[i]]
+  sarima(ts.ddf, c(a[1], a[6], a[2], a[3], a[7], a[4]), S = a[4],
+         xreg = cbind(ts.ddf, I.1, I.1.5, I.2, I.2.5), no.constant = TRUE)
+  
   
   
 }
   
-I.1 <- ifelse(AIRSD$DATE < '2020-04-20',0, ifelse(AIRSD$DATE >= '2020-08-16', 0, 1))
-I.2.5 <- ifelse((AIRSD$DATE <= '2020-09-13' & AIRSD$DATE >= '2020-08-30'),1,0)
-I.1.5 <- ifelse((AIRSD$DATE >= '2020-03-22' & AIRSD$DATE <= '2020-04-19') |
-  (AIRSD$DATE >= '2020-11-19' & AIRSD$DATE <= '2020-11-23'), 1, 0)
-I.2 <- ifelse((AIRSD$DATE >= '2020-08-16' & AIRSD$DATE <= '2020-08-29') |
-                (AIRSD$DATE >= '2020-09-14' & AIRSD$DATE <= '2020-10-11') |
-                (AIRSD$DATE >= '2020-11-24' & AIRSD$DATE <= '2020-11-25'), 1, 0)
+
 
 
 
