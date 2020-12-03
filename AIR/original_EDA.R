@@ -1,15 +1,15 @@
-source('sgg_separate.R', encoding='utf-8')
-source('packages_need.R', encoding='utf-8')
+source('./AIR/sgg_separate.R', encoding='utf-8')
+source('./AIR/packages_need.R', encoding='utf-8')
 
 #***************************************# 
 #             데이터로드                #
 #***************************************# 
 # AIRSEOUL <== 대기분석 이거 쓸
 setwd("C:\\Users\\hanso\\Desktop\\빅통분\\gitgit")
+
 AIR <- read.csv('./data/airseoul.csv', header = T)[,-1]
 AIR$SGG <- factor(AIR$SGG)
 AIR$week <- as.Date(AIR$week)
-
 
 
 #***************************************# 
@@ -18,7 +18,7 @@ AIR$week <- as.Date(AIR$week)
 #***************************************# 
 #     forecast:: 계절변동 시각화        #
 #***************************************# 
-# x1 <- df %>% group_by(SGG) %>% select(NO2)
+# x1 <- AIR %>% group_by(SGG) %>% select(NO2)
 # #x1 <- sgg1 %>% select(NO2) 
 # df_ts <- ts(x1, start = 2009, end = 2019, freq=52)
 # df_ts_test <- ts(x1, start=2020, end = c(2020, 11), freq=52)
@@ -29,12 +29,12 @@ AIR$week <- as.Date(AIR$week)
 #   : 분석 전, 구마다 시계열 그림       #
 #***************************************# 
 par(mfrow = c(4,2))
-kind_ssg <-unique(df$SGG)
+kind_ssg <-unique(AIR$SGG)
 for (i in kind_ssg) {
-  plot(df[df$SGG == i,]$NO2, type = "l")
+  plot(AIR[AIR$SGG == i,]$NO2, type = "l")
 }
 #***************************************# 
-p=ggplot(df, aes(x=week,y=NO2))+
+p=ggplot(AIR, aes(x=week,y=NO2))+
   geom_line(mapping=aes(x=week,y=NO2,color=NO2))+
   facet_wrap(~SGG)+
   labs(title="구별 대기질::NO2 현황")+
@@ -42,7 +42,7 @@ p=ggplot(df, aes(x=week,y=NO2))+
 #추세선 그리기
 p + stat_smooth(color = "yellow", method = "loess")
 
-p=ggplot(df, aes(x=week,y=O3))+
+p=ggplot(AIR, aes(x=week,y=O3))+
   geom_line(mapping=aes(x=week,y=O3,color=O3))+
   facet_wrap(~SGG)+
   labs(title="구별 대기질::O3 현황")+
@@ -50,7 +50,7 @@ p=ggplot(df, aes(x=week,y=O3))+
 #추세선 그리기
 p + stat_smooth(color = "yellow", method = "loess")
 
-p=ggplot(df, aes(x=week,y=CO))+
+p=ggplot(AIR, aes(x=week,y=CO))+
   geom_line(mapping=aes(x=week,y=CO,color=CO))+
   facet_wrap(~SGG)+
   labs(title="구별 대기질::CO 현황")+
@@ -58,7 +58,7 @@ p=ggplot(df, aes(x=week,y=CO))+
 #추세선 그리기
 p + stat_smooth(color = "yellow", method = "loess")
 
-p=ggplot(df, aes(x=week,y=SO2))+
+p=ggplot(AIR, aes(x=week,y=SO2))+
   geom_line(mapping=aes(x=week,y=SO2,color=SO2))+
   facet_wrap(~SGG)+
   labs(title="구별 대기질::SO2 현황")+
@@ -66,7 +66,7 @@ p=ggplot(df, aes(x=week,y=SO2))+
 #추세선 그리기
 p + stat_smooth(color = "yellow", method = "loess")
 
-p=ggplot(df, aes(x=week,y=PM10))+
+p=ggplot(AIR, aes(x=week,y=PM10))+
   geom_line(mapping=aes(x=week,y=PM10,color=PM10))+
   facet_wrap(~SGG)+
   labs(title="구별 대기질::PM10 현황")+
@@ -74,7 +74,6 @@ p=ggplot(df, aes(x=week,y=PM10))+
 
 #추세선 그리기
 p + stat_smooth(color = "yellow", method = "loess")
-
 
 
 #***************************************# 
@@ -171,8 +170,8 @@ text(20,0.6,"Test data",col="red")
 #***************************************#
 # 평균적인 시계열(train dataset)
 #***************************************#
-train = df[df$week < '2020-01-06',]
-test = df[df$week >= '2020-01-06',]
+train = AIR[AIR$week < '2020-01-06',]
+test = AIR[AIR$week >= '2020-01-06',]
 #***************************************#
 c <- train %>% group_by(week) %>% summarise(mean(NO2))
 tts <- ts(c$`mean(NO2)`, start = c(2009,12,28), frequency = 52)
