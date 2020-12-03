@@ -80,18 +80,11 @@ save.image(file = "./data/사회적거리두기_전처리.RData")
 # 개입분석을 위한 가변수 처리
 #******************************************************************************#
 library(astsa)
-I.1 <- ifelse(AIRSD$DATE < '2020-04-20',0, ifelse(AIRSD$DATE >= '2020-08-16', 0, 1))
-I.2.5 <- ifelse((AIRSD$DATE <= '2020-09-13' & AIRSD$DATE >= '2020-08-30'),1,0)
-I.1.5 <- ifelse((AIRSD$DATE >= '2020-03-22' & AIRSD$DATE <= '2020-04-19') |
-                  (AIRSD$DATE >= '2020-11-19' & AIRSD$DATE <= '2020-11-23'), 1, 0)
-I.2 <- ifelse((AIRSD$DATE >= '2020-08-16' & AIRSD$DATE <= '2020-08-29') |
-                (AIRSD$DATE >= '2020-09-14' & AIRSD$DATE <= '2020-10-11') |
-                (AIRSD$DATE >= '2020-11-24' & AIRSD$DATE <= '2020-11-25'), 1, 0)
 
 for (i in 2:5){
   ddf <- df[df$SGG == name_ssg[i],]
   ddf <- ddf[,c(2,6)]
-  
+
   I.1 <- ifelse(ddf$DATE < '2020-04-20',0, ifelse(ddf$DATE >= '2020-08-16', 0, 1))
   I.2.5 <- ifelse((ddf$DATE <= '2020-09-13' & ddf$DATE >= '2020-08-30'),1,0)
   I.1.5 <- ifelse((ddf$DATE >= '2020-03-22' & ddf$DATE <= '2020-04-19') |
@@ -100,22 +93,27 @@ for (i in 2:5){
                   (ddf$DATE >= '2020-09-14' & ddf$DATE <= '2020-10-11') |
                   (ddf$DATE >= '2020-11-24' & ddf$DATE <= '2020-11-25'), 1, 0)
   
-  
-  
-  
-  ts.ddf <- ts(ddf, frequency =7) #, start = c(2010,1), end = c(2020,330), 
+  ts.ddf <- ts(ddf, start = decimal_date(as.Date("2010-01-01")), frequency = 7)
+  tts.ddf <- ts.ddf[,2]
   a <- arima.so2[[i]]
-  sarima(ts.ddf, c(a[1], a[6], a[2], a[3], a[7], a[4]), S = a[4],
-         xreg = cbind(ts.ddf, I.1, I.1.5, I.2, I.2.5), no.constant = TRUE)
-  
+  sarima(tts.ddf, a[1], a[6], a[2], a[3], a[7], a[4], S = a[4],
+         xreg = cbind(ddd, I.1, I.1.5, I.2, I.2.5), no.constant = TRUE)
   
   
 }
-  
 
 
-
-
-
-
-
+# cbind(tts.ddf, I.1, I.1.5, I.2, I.2.5) -> dd
+# data.frame(dd) -> ddd
+# 
+# sarima(tts.ddf, a[1], a[6], a[2], a[3], a[7], a[4], S = a[4],
+#        xreg = cbind(as.matrix(ddd), I.1, I.1.5, I.2, I.2.5), no.constant = TRUE)
+# 
+# arima(tts.ddf, order = c(0,1,1), seasonal = list(order = c(1,0,0)),
+#        xreg = cbind(ddd, I.1, I.1.5, I.2, I.2.5))
+# ddd <- as.matrix(cbind(ddd, I.1, I.1.5, I.2, I.2.5))
+# ddd <- as.matrix()
+# 
+# 
+# sarima(tts.ddf, 0,1,1,1,0,0, S = 52,
+#        xreg = ddd, no.constant = TRUE)
