@@ -1,3 +1,5 @@
+source('./AIR/packages_need.R', encoding='utf-8')
+source('./AIR/sgg_separate.R', encoding='utf-8')
 ##################################################################################
 # 예측값 월별 평균!!!! (5: tbats, 4: stl 3 : neural)
 ##################################################################################
@@ -67,7 +69,8 @@ getAIRS <- function(x,var) {
   sgg <- AIR[AIR$SGG==kind_ssg[x],]
   result <- sgg[,c(var)]
   return(data.frame(result))
-} 
+}
+
 week <- unique(AIR$week)
 down_airdata <- function(air_metric="NO2",var) {
   
@@ -88,16 +91,19 @@ down_airdata <- function(air_metric="NO2",var) {
   result %>% write_rds(paste0("./data/air_", air_metric, "_df.rds"))
 }
 
+# 
+# down_airdata("NO2",3)
+# down_airdata("O3",4)
+# down_airdata("CO",5)
+# down_airdata("SO2",6)
+# down_airdata("PM10",7)
 ##################################################################################
 # 데이터 불러오기
 ##################################################################################
-no2 <- o3 <- co <- so2 <- pm10 <- data.frame()
-getData <- function() {
-  down_airdata("NO2",3)
-  down_airdata("O3",4)
-  down_airdata("CO",5)
-  down_airdata("SO2",6)
-  down_airdata("PM10",7)
+
+getData <- function(){
+  
+  no2 <- o3 <- co <- so2 <- pm10 <- data.frame()
   
   no2 <<- readRDS(file = "./data/air_NO2_df.rds")
   o3 <<- readRDS(file = "./data/air_O3_df.rds")
