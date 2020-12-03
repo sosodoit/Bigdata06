@@ -55,35 +55,45 @@ source('./AIR/Day_sgg_separate.R', encoding='utf-8') # daily data
 # 코로나19 사회적 거리두기 따라 한반도 공기 맑다 탁했다 오락가락
 #******************************************************************************#
 # 여기 부분 지워도 될 것 같은데 
-AIRSD <- df %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
-#AIRSD <- df %>% filter(DATE>="2020-01-01") %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
-SD <- numeric(nrow(AIRSD))
-for (i in 1:nrow(AIRSD)) {
-  if (AIRSD$DATE[i] < '2020-03-22') { SD[i] = 0 }
-  else if (AIRSD$DATE[i] < '2020-04-20') { SD[i] = 1.5 }
-  else if (AIRSD$DATE[i] < '2020-05-06') { SD[i] = 1 }
-  else if (AIRSD$DATE[i] < '2020-08-16') { SD[i] = 1 }
-  else if (AIRSD$DATE[i] < '2020-08-30') { SD[i] = 2 }
-  else if (AIRSD$DATE[i] < '2020-09-14') { SD[i] = 2.5 }
-  else if (AIRSD$DATE[i] < '2020-09-28') { SD[i] = 2 }
-  else if (AIRSD$DATE[i] < '2020-10-12') { SD[i] = 2 }
-  else if (AIRSD$DATE[i] < '2020-11-19') { SD[i] = 1.5 }
-  else if (AIRSD$DATE[i] < '2020-11-24') { SD[i] = 2 }
-  else {SD[i] = 2}
-}
-AIRSD <- cbind(AIRSD, SD)
-AIRSD$SD <- factor(AIRSD$SD, ordered = T)
-
-save.image(file = "./data/사회적거리두기_전처리.RData")
+# AIRSD <- df %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
+# #AIRSD <- df %>% filter(DATE>="2020-01-01") %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
+# SD <- numeric(nrow(AIRSD))
+# for (i in 1:nrow(AIRSD)) {
+#   if (AIRSD$DATE[i] < '2020-03-22') { SD[i] = 0 }
+#   else if (AIRSD$DATE[i] < '2020-04-20') { SD[i] = 1.5 }
+#   else if (AIRSD$DATE[i] < '2020-05-06') { SD[i] = 1 }
+#   else if (AIRSD$DATE[i] < '2020-08-16') { SD[i] = 1 }
+#   else if (AIRSD$DATE[i] < '2020-08-30') { SD[i] = 2 }
+#   else if (AIRSD$DATE[i] < '2020-09-14') { SD[i] = 2.5 }
+#   else if (AIRSD$DATE[i] < '2020-09-28') { SD[i] = 2 }
+#   else if (AIRSD$DATE[i] < '2020-10-12') { SD[i] = 2 }
+#   else if (AIRSD$DATE[i] < '2020-11-19') { SD[i] = 1.5 }
+#   else if (AIRSD$DATE[i] < '2020-11-24') { SD[i] = 2 }
+#   else {SD[i] = 2}
+# }
+# AIRSD <- cbind(AIRSD, SD)
+# AIRSD$SD <- factor(AIRSD$SD, ordered = T)
+# 
+# save.image(file = "./data/사회적거리두기_전처리.RData")
 
 #******************************************************************************#
 # 개입분석을 위한 가변수 처리
 #******************************************************************************#
 library(astsa)
 
-for (i in 2:5){
+aics <- NULL;
+for (i in 1:39) {
+  aics <- c(aics, AIC(arima.so2[[i]]))
+}
+aics.frame <- data.frame(aics)
+rownames(aics.frame) <- name_ssg[-1]
+which.min(aics) # 28번 모수선택 (0,1,3)(2,0,0)[52]
+
+a <- arima.so2[[which.min(aics)]]$arma
+fitting <- list()
+for (i in 2:40){
   ddf <- df[df$SGG == name_ssg[i],]
-  ddf <- ddf[,c(2,6)]
+  ddf <- ddf[,c(2,6)] #####SO2 지정
 
   I.1 <- ifelse(ddf$DATE < '2020-04-20',0, ifelse(ddf$DATE >= '2020-08-16', 0, 1))
   I.2.5 <- ifelse((ddf$DATE <= '2020-09-13' & ddf$DATE >= '2020-08-30'),1,0)
@@ -95,25 +105,10 @@ for (i in 2:5){
   
   ts.ddf <- ts(ddf, start = decimal_date(as.Date("2010-01-01")), frequency = 7)
   tts.ddf <- ts.ddf[,2]
-  a <- arima.so2[[i]]
-  sarima(tts.ddf, a[1], a[6], a[2], a[3], a[7], a[4], S = a[4],
-         xreg = cbind(ddd, I.1, I.1.5, I.2, I.2.5), no.constant = TRUE)
   
-  
+  fitting[[i-1]] <- sarima(tts.ddf, a[1], a[6], a[2], a[3], a[7], a[4], S = a[5],
+         xreg = as.matrix(cbind(I.1, I.1.5, I.2, I.2.5)), no.constant = TRUE)
+  summary(fitting[[i-1]]$fit)
+  resid <- resid(fitting[[i-1]]$fit)
+  acf2(resid)
 }
-
-
-# cbind(tts.ddf, I.1, I.1.5, I.2, I.2.5) -> dd
-# data.frame(dd) -> ddd
-# 
-# sarima(tts.ddf, a[1], a[6], a[2], a[3], a[7], a[4], S = a[4],
-#        xreg = cbind(as.matrix(ddd), I.1, I.1.5, I.2, I.2.5), no.constant = TRUE)
-# 
-# arima(tts.ddf, order = c(0,1,1), seasonal = list(order = c(1,0,0)),
-#        xreg = cbind(ddd, I.1, I.1.5, I.2, I.2.5))
-# ddd <- as.matrix(cbind(ddd, I.1, I.1.5, I.2, I.2.5))
-# ddd <- as.matrix()
-# 
-# 
-# sarima(tts.ddf, 0,1,1,1,0,0, S = 52,
-#        xreg = ddd, no.constant = TRUE)
