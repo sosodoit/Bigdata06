@@ -54,8 +54,8 @@ source('./AIR/Day_sgg_separate.R', encoding='utf-8') # daily data
 # http://dongascience.donga.com/news.php?idx=40983
 # 코로나19 사회적 거리두기 따라 한반도 공기 맑다 탁했다 오락가락
 #******************************************************************************#
-
-AIRSD <- df %>% filter(DATE>="2020-01-01") %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
+AIRSD <- df %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
+#AIRSD <- df %>% filter(DATE>="2020-01-01") %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
 SD <- numeric(nrow(AIRSD))
 for (i in 1:nrow(AIRSD)) {
   if (AIRSD$DATE[i] < '2020-03-22') { SD[i] = 0 }
@@ -74,4 +74,22 @@ AIRSD <- cbind(AIRSD, SD)
 AIRSD$SD <- factor(AIRSD$SD, ordered = T)
 
 save.image(file = "./data/사회적거리두기_전처리.RData")
+
+#******************************************************************************#
+# 개입분석을 위한 가변수 처리
+#******************************************************************************#
+
+for (i in 1:length())
+I.1 <- ifelse(AIRSD$DATE < '2020-04-20',0, ifelse(AIRSD$DATE >= '2020-08-16', 0, 1))
+I.2.5 <- ifelse((AIRSD$DATE <= '2020-09-13' & AIRSD$DATE >= '2020-08-30'),1,0)
+I.1.5 <- ifelse((AIRSD$DATE >= '2020-03-22' & AIRSD$DATE <= '2020-04-19') |
+  (AIRSD$DATE >= '2020-11-19' & AIRSD$DATE <= '2020-11-23'), 1, 0)
+I.2 <- ifelse((AIRSD$DATE >= '2020-08-16' & AIRSD$DATE <= '2020-08-29') |
+                (AIRSD$DATE >= '2020-09-14' & AIRSD$DATE <= '2020-10-11') |
+                (AIRSD$DATE >= '2020-11-24' & AIRSD$DATE <= '2020-11-25'), 1, 0)
+
+
+
+
+
 
