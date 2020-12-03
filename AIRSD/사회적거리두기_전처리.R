@@ -54,6 +54,7 @@ source('./AIR/Day_sgg_separate.R', encoding='utf-8') # daily data
 # http://dongascience.donga.com/news.php?idx=40983
 # 코로나19 사회적 거리두기 따라 한반도 공기 맑다 탁했다 오락가락
 #******************************************************************************#
+# 여기 부분 지워도 될 것 같은데 
 AIRSD <- df %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
 #AIRSD <- df %>% filter(DATE>="2020-01-01") %>% select(SGG,DATE,NO2,O3,CO,SO2,PM10)
 SD <- numeric(nrow(AIRSD))
@@ -79,7 +80,12 @@ save.image(file = "./data/사회적거리두기_전처리.RData")
 # 개입분석을 위한 가변수 처리
 #******************************************************************************#
 
-for (i in 1:length())
+for (i in 2:40){
+  ddf <- df[df$SGG == name_ssg[i],]
+  
+  
+}
+  
 I.1 <- ifelse(AIRSD$DATE < '2020-04-20',0, ifelse(AIRSD$DATE >= '2020-08-16', 0, 1))
 I.2.5 <- ifelse((AIRSD$DATE <= '2020-09-13' & AIRSD$DATE >= '2020-08-30'),1,0)
 I.1.5 <- ifelse((AIRSD$DATE >= '2020-03-22' & AIRSD$DATE <= '2020-04-19') |
