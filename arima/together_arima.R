@@ -3,12 +3,11 @@
 # 1 1 0 0 1 1 0 
 # arima(p,d,q)(P,D,Q)m
 
-
 # 다시 저장용 arima2
 for ( i in 1:39 ){
   load(paste0('./arima/arima_SO2_sgg', i, '.RData'))
   saveRDS(mod_lst, file=paste0("./arima2/arima2_SO2_sgg",i,".rds"))
-  #rm(list=ls())
+  rm(list=ls())
 }
 
 # 불러오기

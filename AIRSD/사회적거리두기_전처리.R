@@ -112,3 +112,6 @@ for (i in 2:40){
   resid <- resid(fitting[[i-1]]$fit)
   acf2(resid)
 }
+
+
+save.image(file = "./data/intervention.RData")
