@@ -23,7 +23,7 @@ m.a <- data.frame(matrix(ncol = 40, nrow = 11)) # 달마다의 예측값 평균
 names(m.a) <- name_ssg
 
 ##### 여기 이름만 수정해서 돌려주세용!!!!
-arima.mat<-arima.so2
+arima.mat<-arima.O3
 pred.arima <- data.frame(matrix(ncol = 39, nrow = 11))
 for ( i in 1:39 ){
   pred.arima[,i] <- data.frame(matrix(mon.avg.arima(arima.mat[[i]])))[-12,]
@@ -40,7 +40,7 @@ rownames(observe.2020) <- c("1월", "2월", "3월", "4월", "5월", "6월",
                           "7월", "8월", "9월", "10월", "11월")
 
 m.res <- pred.arima - observe.2020
-saveRDS(m.res, file="./data/monthly_residuals_SO2.rds")
+saveRDS(m.res, file="./data/monthly_residuals_o3.rds")
 #######################################################################################################
 #######################################################################################################
 # 구 한번에 보는 코드
