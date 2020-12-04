@@ -2,7 +2,7 @@
 #https://cfss.uchicago.edu/notes/leaflet/
 #https://rstudio.github.io/leaflet/map_widget.html
 #https://bookdown.org/robinlovelace/geocompr/spatial-class.html#raster-data
-
+# https://neurowhai.tistory.com/350 ********
 library("dplyr")
 library("ggplot2")
 library('leaflet')
@@ -48,9 +48,7 @@ station = data.frame(
 
 df2 <- merge(station,df,by="SGG")
 df2$SGG <- factor(df2$SGG, levels = name_ssg[-1])
-library(ggthemes)
 
-devtools::install_github("gadenbuie/ggpomological")
 
 bins <- seq(-200,550,by=50)
 #pal <- colorBin("orange.pal", domain = df2$Sep, bins = bins)
