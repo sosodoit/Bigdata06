@@ -114,4 +114,5 @@ for (i in 2:40){
 }
 
 fitting_so2 <- fitting
-save.image(file = "./data/intervention_so2.RData")
+#save.image(file = "./data/intervention_so2.RData")
+saveRDS(fitting_so2, file="./data/intervention_so2.rds")
