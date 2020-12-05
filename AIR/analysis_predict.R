@@ -23,7 +23,7 @@ m.a <- data.frame(matrix(ncol = 40, nrow = 11)) # 달마다의 예측값 평균
 names(m.a) <- name_ssg
 
 ##### 여기 이름만 수정해서 돌려주세용!!!!
-arima.mat<-arima.O3
+arima.mat<-arima.pm10
 pred.arima <- data.frame(matrix(ncol = 39, nrow = 11))
 for ( i in 1:39 ){
   pred.arima[,i] <- data.frame(matrix(mon.avg.arima(arima.mat[[i]])))[-12,]
@@ -33,16 +33,51 @@ rownames(pred.arima) <- c("1월", "2월", "3월", "4월", "5월", "6월",
                          "7월", "8월", "9월", "10월", "11월")
 
 # 월 평균 : 예측 - 실제
-observe <- monthly.lst[[4]]
+observe <- monthly.lst[[5]] ##### 여기 숫자 바꿔야 해요....
+#1:no2 / 2:o3 / 3:co / 4:so2 / 5:pm10
 observe.2020 <- observe[observe$month >= '2020-01',]
 observe.2020 <- observe.2020[,-1]
 rownames(observe.2020) <- c("1월", "2월", "3월", "4월", "5월", "6월",
                           "7월", "8월", "9월", "10월", "11월")
 
 m.res <- pred.arima - observe.2020
+saveRDS(m.res, file="./data/monthly_residuals_pm10.rds")
+#######################################################################################################
+#######################################################################################################
+#o3만 - sts
+
+m.a <- data.frame(matrix(ncol = 40, nrow = 11)) # 달마다의 예측값 평균
+names(m.a) <- name_ssg
+
+##### 여기 이름만 수정해서 돌려주세용!!!!
+arima.mat<-arima.O3
+pred.arima <- data.frame(matrix(ncol = 39, nrow = 11))
+for ( i in 1:39 ){
+  pred.arima[,i] <- data.frame(matrix(mon.avg.sts(arima.mat[[i]])))[-12,]
+}
+colnames(pred.arima) <- name_ssg[-1]
+rownames(pred.arima) <- c("1월", "2월", "3월", "4월", "5월", "6월",
+                          "7월", "8월", "9월", "10월", "11월")
+
+# 월 평균 : 예측 - 실제
+observe <- monthly.lst[[2]] ##### 여기 숫자 바꿔야 해요....
+#1:no2 / 2:o3 / 3:co / 4:so2 / 5:pm10
+observe.2020 <- observe[observe$month >= '2020-01',]
+observe.2020 <- observe.2020[,-1]
+rownames(observe.2020) <- c("1월", "2월", "3월", "4월", "5월", "6월",
+                            "7월", "8월", "9월", "10월", "11월")
+
+m.res <- pred.arima - observe.2020
 saveRDS(m.res, file="./data/monthly_residuals_o3.rds")
+
 #######################################################################################################
 #######################################################################################################
+
+
+
+
+
+
 # 구 한번에 보는 코드
 for (i in 2:40) {
   k <- (i- 1)
@@ -323,7 +358,7 @@ o3.plot.arima <- function() { # 그림 7
   #plot(train.o3.ts[,2], xlim = c(2010, 2021), ylim = c(0, 0.012), col = "red") #2010-2019 실제값
 }
 o3.plot.sts <- function() { # 그림 2
-  f.pred <- forecast(mod_lst[[2]], 52) 
+  f.pred <- forecast(mod_lst[[2]]) 
   plot(f.pred,xlim = c(2010, 2021), ylim = c(0, 0.05))
   par (new = TRUE)
   plot(test.o3.ts[,2], xlim = c(2010, 2021), ylim = c(0, 0.05), col = "red")
